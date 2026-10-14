@@ -1,0 +1,651 @@
+<title>ふわ髪少年キャラ案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* レイアウト: 上に条件メモ、下に 10 人の立ち絵カードを 5×2 (狭い画面は 2 列 / 1 列) で並べる。カードを押すと拡大 */
+:root {
+  --bg: #f2f5fa;
+  --surface: #ffffff;
+  --ink: #1c2230;
+  --muted: #5d6679;
+  --line: #dde3ee;
+  --gold: #a87a22;
+  --chip: #e7edf7;
+  --portrait-bg: #eaf0f8;
+  --font-display: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141b; --surface: #1a1e28; --ink: #e8ecf4; --muted: #9aa3b6; --line: #2a3040;
+    --gold: #d8b45f; --chip: #242a37; --portrait-bg: #1f2531; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141b; --surface: #1a1e28; --ink: #e8ecf4; --muted: #9aa3b6; --line: #2a3040;
+  --gold: #d8b45f; --chip: #242a37; --portrait-bg: #1f2531; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 48px;
+}
+.wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: grid; gap: 12px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; color: var(--gold); text-transform: uppercase; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 4vw, 42px); line-height: 1.25; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 62ch; }
+.specs { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.specs li { background: var(--chip); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.specs b { font-weight: 700; margin-right: 6px; color: var(--gold); }
+
+.grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1180px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  display: grid; grid-template-rows: auto 1fr; text-align: left; padding: 0; font: inherit; color: inherit; cursor: zoom-in;
+  transition: transform .2s ease, border-color .2s ease;
+}
+.card:hover { transform: translateY(-3px); border-color: var(--gold); }
+.card:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.card svg { display: block; width: 100%; height: auto; background: var(--portrait-bg); }
+.info { padding: 12px 14px 14px; display: grid; gap: 6px; min-width: 0; align-content: start; }
+.no { font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; color: var(--gold); }
+.name { font-family: var(--font-display); font-size: 20px; font-weight: 700; line-height: 1.3; }
+.name small { display: block; font-family: var(--font-body); font-size: 12px; font-weight: 400; color: var(--muted); letter-spacing: .08em; }
+.concept { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.6; }
+.swatches { display: flex; gap: 4px; margin-top: 2px; }
+.swatches span { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); }
+
+dialog {
+  border: 1px solid var(--line); border-radius: 18px; padding: 0; background: var(--surface); color: var(--ink);
+  width: min(880px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+}
+dialog::backdrop { background: rgb(10 12 20 / .55); }
+.detail { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+.detail svg { width: 100%; height: auto; display: block; background: var(--portrait-bg); }
+.detail .text { padding: 24px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.detail .name { font-size: 28px; }
+.detail dl { margin: 0; display: grid; grid-template-columns: 4.5em 1fr; gap: 6px 12px; font-size: 14px; }
+.detail dt { color: var(--gold); font-weight: 700; }
+.detail dd { margin: 0; }
+.close { justify-self: start; background: var(--chip); color: var(--ink); border: 0; border-radius: 999px; padding: 6px 16px; font: inherit; cursor: pointer; }
+.close:focus-visible { outline: 3px solid var(--gold); }
+@media (max-width: 680px) { .detail { grid-template-columns: minmax(0, 1fr); } }
+
+footer { color: var(--muted); font-size: 13px; max-width: 70ch; }
+footer p { margin: 0 0 6px; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Character Concepts · 10 designs</div>
+    <h1>ふわ髪少年キャラ案</h1>
+    <p class="lead">少しかわいい、でもかわいすぎない少年系。天使みたいなパーマの無造作マッシュに、VTuber らしい豪華な衣装を合わせた 10 案です。カードを押すと拡大して詳細を見られます。</p>
+    <ul class="specs">
+      <li><b>髪型</b>パーマ系の無造作マッシュ</li>
+      <li><b>髪色</b>白・クリーム・薄い水色 (混色あり)</li>
+      <li><b>顔</b>童顔・卵型の輪郭</li>
+      <li><b>衣装</b>豪華めの配信者衣装</li>
+    </ul>
+  </header>
+
+  <section class="grid" id="grid" aria-label="キャラクター案"></section>
+
+  <footer>
+    <p>方向性を比べるためのラフです (コードで描いたベクター画。完成イラストではありません)。</p>
+    <p>気に入った番号や「◯番の髪 × △番の衣装」のような組み合わせを教えてもらえれば、表情差分や Live2D 用のパーツ分け案に進めます。</p>
+  </footer>
+</div>
+
+<dialog id="dlg" aria-label="キャラクター詳細">
+  <div class="detail">
+    <div id="dlgArt"></div>
+    <div class="text">
+      <div class="no" id="dlgNo"></div>
+      <div class="name" id="dlgName"></div>
+      <p class="concept" id="dlgConcept"></p>
+      <dl id="dlgList"></dl>
+      <div class="swatches" id="dlgSw"></div>
+      <button class="close" id="dlgClose" type="button">閉じる</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+// ===== キャラ定義 =====
+const SKIN = { base: '#fdeee6', shade: '#f2d2c6', line: '#c98f80', blush: '#ff9c9c' };
+
+const CHARS = [
+  {
+    name: '白羽 ノア', yomi: 'しらは のあ', seed: 11,
+    concept: '空から落ちてきた見習い天使。のんびりしているが、褒められると照れて黙る。',
+    hair: { top: '#ffffff', mid: '#f4f7fb', tip: '#cfe6f6', line: '#a9bccf', inner: null },
+    eye: { color: '#4fb3c9', deep: '#1f5f7a', droop: 3 }, mouth: 'smile',
+    outfit: 'angel', pal: { main: '#fbfaf6', sub: '#e9eef6', trim: '#d6ad4c', gem: '#5ec4d6', shirt: '#ffffff' },
+    acc: ['halo', 'wings', 'earring'], bg: ['#e3f1fb', '#fff8ec'], motif: 'feather',
+    hairText: '白 → 毛先だけ薄水色', eyeText: 'アクアのたれ目', outfitText: '白金の法衣 + ケープ、小さな羽と天使の輪',
+  },
+  {
+    name: '綿星 ルカ', yomi: 'わたぼし るか', seed: 23,
+    concept: '星を集めるのが趣味のアイドル見習い。元気だけど、ちょっと背伸びしがち。',
+    hair: { top: '#fff6df', mid: '#f7e6bf', tip: '#efd39a', line: '#bf9f68', inner: null },
+    eye: { color: '#e7a13a', deep: '#8a4b12', droop: 1 }, mouth: 'open',
+    outfit: 'idol', pal: { main: '#24315e', sub: '#f6f2e8', trim: '#e2b54e', gem: '#f2d36b', shirt: '#ffffff' },
+    acc: ['starpin'], bg: ['#efe9ff', '#fff4dc'], motif: 'star',
+    hairText: 'クリーム (毛先ほど濃いめ)', eyeText: '琥珀色の丸目', outfitText: '紺 × 金のスタンドカラー ステージジャケット、星のブローチ',
+  },
+  {
+    name: '氷見 シオン', yomi: 'ひみ しおん', seed: 37,
+    concept: '雪国の小さな王子。礼儀正しいのに、ゲームになると負けず嫌い。',
+    hair: { top: '#f2f9ff', mid: '#d7ecfb', tip: '#b4d7f2', line: '#8eaccb', inner: null },
+    eye: { color: '#8a78d6', deep: '#3d2c86', droop: 0 }, mouth: 'smirk',
+    outfit: 'prince', pal: { main: '#f4f8fd', sub: '#a9cbe8', trim: '#cfa548', gem: '#3f6fd0', shirt: '#ffffff', sash: '#5d86c9' },
+    acc: ['earring'], bg: ['#e2eefa', '#f1ecfb'], motif: 'snow',
+    hairText: '薄水色のグラデーション', eyeText: 'すみれ色、やや切れ長', outfitText: '白の王子服、肩章・サッシュ・サファイアのブローチ',
+  },
+  {
+    name: '甘夜 ミル', yomi: 'あまよ みる', seed: 41,
+    concept: '夜のお茶会の主催者。毒舌っぽく見えて、実はおせっかい。',
+    hair: { top: '#fffaf0', mid: '#f6ead2', tip: '#e9d6b4', line: '#b49a79', inner: null },
+    eye: { color: '#d0485d', deep: '#6d1626', droop: 1 }, mouth: 'cat',
+    outfit: 'gothic', pal: { main: '#24202b', sub: '#3a3344', trim: '#c9a35a', gem: '#c8304a', shirt: '#fbf8f2' },
+    acc: ['crossEarring'], bg: ['#efe6ee', '#e9e5f3'], motif: 'rose',
+    hairText: '白〜クリーム', eyeText: 'ガーネットの丸目', outfitText: '黒のゴシック燕尾、レースのジャボ、十字のブローチ',
+  },
+  {
+    name: '潮騒 ハク', yomi: 'しおさい はく', seed: 53,
+    concept: '港町育ちの船長見習い。人懐っこくて、すぐ「いっしょに行こ」と言う。',
+    hair: { top: '#ffffff', mid: '#eef6fb', tip: '#d8ecf7', line: '#a3bcd0', inner: '#9fd3ee' },
+    eye: { color: '#2aa7a1', deep: '#0e5552', droop: 2 }, mouth: 'smile',
+    outfit: 'marine', pal: { main: '#ffffff', sub: '#203a6b', trim: '#d4a94a', gem: '#d64848', shirt: '#ffffff' },
+    acc: ['anchorpin'], bg: ['#dff2f7', '#eef6ff'], motif: 'bubble',
+    hairText: '白 + 内側だけ水色 (インナーカラー)', eyeText: 'ティールのたれ目', outfitText: '豪華セーラー、金ボタンと赤いスカーフ',
+  },
+  {
+    name: '雲居 ソラ', yomi: 'くもい そら', seed: 67,
+    concept: '星読みの魔法使い見習い。ぼーっとしているようで、勘がやたら鋭い。',
+    hair: { top: '#fbfdff', mid: '#e5f1fb', tip: '#c3dff3', line: '#9bb5cc', inner: null },
+    eye: { color: '#e0b443', deep: '#7a5512', droop: 4 }, mouth: 'neutral',
+    outfit: 'mage', pal: { main: '#1f2a52', sub: '#6d84c9', trim: '#e0bf62', gem: '#8fd0f0', shirt: '#f3f1ea' },
+    acc: ['moonpin'], bg: ['#e4e9fb', '#f5effb'], motif: 'star',
+    hairText: '白 → 空色', eyeText: '金色の眠そうなたれ目', outfitText: '星座柄のフード付きケープ、大きな宝石の留め具',
+  },
+  {
+    name: '鈴蘭 リオ', yomi: 'すずらん りお', seed: 79,
+    concept: '老舗茶房の跡取り息子。しっかり者で、配信でも段取りがいい。',
+    hair: { top: '#fffbec', mid: '#f3ead0', tip: '#cfe7df', line: '#a9a688', inner: null },
+    eye: { color: '#4fa66f', deep: '#1c5531', droop: 1 }, mouth: 'smile',
+    outfit: 'chinese', pal: { main: '#f7f3e8', sub: '#2f6e5a', trim: '#c99a3f', gem: '#3f9c7c', shirt: '#ffffff' },
+    acc: ['tassel'], bg: ['#e7f3ec', '#fbf3e1'], motif: 'cloud',
+    hairText: 'クリーム → 毛先ミント寄りの水色', eyeText: '翡翠色', outfitText: 'チャイナ風の礼装、金刺繍と飾り結びボタン',
+  },
+  {
+    name: '霜月 セナ', yomi: 'しもつき せな', seed: 97,
+    concept: '近衛騎士団の最年少。真面目すぎて、ボケに全部まじめに返す。',
+    hair: { top: '#f7f9fc', mid: '#e3e9f2', tip: '#c9d4e4', line: '#9aa8bd', inner: null },
+    eye: { color: '#5a86c4', deep: '#1f3a6a', droop: -1 }, mouth: 'neutral',
+    outfit: 'military', pal: { main: '#eef2f8', sub: '#30456e', trim: '#d0a54a', gem: '#2f5ea8', shirt: '#ffffff' },
+    acc: ['earcuff'], bg: ['#e6ebf4', '#eef3f9'], motif: 'snow',
+    hairText: '銀に近い白', eyeText: 'ブルーグレー、少しつり目', outfitText: '白の騎士礼装、飾緒・勲章・金の肩章',
+  },
+  {
+    name: '綿飴 ユノ', yomi: 'わたあめ ゆの', seed: 103,
+    concept: '冬生まれのゲーマー。寒がりでいつもふわふわを着ている。',
+    hair: { top: '#fff7e6', mid: '#e6f1fb', tip: '#bcdcf3', line: '#a7aebf', inner: null },
+    eye: { color: '#e27aa0', deep: '#7c2346', droop: 3 }, mouth: 'cat',
+    outfit: 'fur', pal: { main: '#8fb3dc', sub: '#fdf8ef', trim: '#d9b25a', gem: '#f08fb0', shirt: '#ffffff' },
+    acc: ['headphones'], bg: ['#fbeaf1', '#e7f1fb'], motif: 'bubble',
+    hairText: 'クリームと薄水色のミックス', eyeText: 'ピンクのたれ目', outfitText: 'ファーの大きな襟のコート、宝石のペンダント、ヘッドホン',
+  },
+  {
+    name: '白銀 カナタ', yomi: 'しろがね かなた', seed: 131,
+    concept: '小国の第三王子、お忍びでストリート暮らし中。気さくで口が悪め。',
+    hair: { top: '#ffffff', mid: '#f1f4f8', tip: '#dfe7f0', line: '#a5b0c0', inner: '#cfe8fb' },
+    eye: { color: '#d9a531', deep: '#6e4a0c', droop: 0 }, mouth: 'smirk',
+    outfit: 'hoodie', pal: { main: '#2b2f3c', sub: '#f2efe7', trim: '#dcb453', gem: '#d94a4a', shirt: '#ffffff' },
+    acc: ['crown', 'earcuff'], bg: ['#eceef4', '#f8f1e2'], motif: 'sparkle',
+    hairText: '白 + 内側ほんのり水色', eyeText: '金色、まっすぐな目', outfitText: '金刺繍のオーバーサイズパーカー、斜めのミニ王冠',
+  },
+];
+
+// ===== 描画ユーティリティ =====
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const f = (n) => Math.round(n * 10) / 10;
+const P = (x, y) => `${f(x)} ${f(y)}`;
+
+// 楕円に沿ったモコモコ(パーマ)の輪郭
+function cloudPath(cx, cy, rx, ry, n, bump, R, a0 = 0, a1 = Math.PI * 2, closed = true) {
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const a = a0 + ((a1 - a0) * i) / n;
+    const j = 0.97 + R() * 0.06;
+    pts.push([a, cx + Math.cos(a) * rx * j, cy + Math.sin(a) * ry * j]);
+  }
+  let d = `M ${P(pts[0][1], pts[0][2])}`;
+  for (let i = 0; i < n; i++) {
+    const am = (pts[i][0] + pts[i + 1][0]) / 2;
+    const k = 1 + bump * (0.7 + R() * 0.6);
+    d += ` Q ${P(cx + Math.cos(am) * rx * k, cy + Math.sin(am) * ry * k)} ${P(pts[i + 1][1], pts[i + 1][2])}`;
+  }
+  return closed ? d + ' Z' : d;
+}
+
+function starPath(x, y, r, points = 5, inner = 0.45) {
+  let d = '';
+  for (let i = 0; i < points * 2; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / points;
+    const rr = i % 2 ? r * inner : r;
+    d += `${i ? 'L' : 'M'} ${P(x + Math.cos(a) * rr, y + Math.sin(a) * rr)} `;
+  }
+  return d + 'Z';
+}
+const gem = (x, y, r, color, trim) =>
+  `<circle cx="${x}" cy="${y}" r="${r + 1.6}" fill="${trim}"/><circle cx="${x}" cy="${y}" r="${r}" fill="${color}"/>` +
+  `<circle cx="${f(x - r * 0.35)}" cy="${f(y - r * 0.35)}" r="${f(r * 0.32)}" fill="#fff" opacity=".85"/>`;
+
+// ===== パーツ =====
+function background(c, id, R) {
+  let s = `<rect width="300" height="360" fill="url(#${id}bg)"/>`;
+  s += `<circle cx="150" cy="150" r="128" fill="#fff" opacity=".35"/>`;
+  for (let i = 0; i < 16; i++) {
+    const x = 14 + R() * 272, y = 14 + R() * 300, r = 3 + R() * 6, o = (0.25 + R() * 0.35).toFixed(2);
+    const col = i % 2 ? c.pal.trim : c.hair.tip;
+    if (c.motif === 'star' || c.motif === 'sparkle') s += `<path d="${starPath(x, y, r, c.motif === 'star' ? 5 : 4, c.motif === 'star' ? 0.45 : 0.25)}" fill="${col}" opacity="${o}"/>`;
+    else if (c.motif === 'bubble') s += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="none" stroke="${col}" stroke-width="1.4" opacity="${o}"/>`;
+    else if (c.motif === 'snow') s += `<g stroke="${col}" stroke-width="1.2" opacity="${o}" stroke-linecap="round">${[0, 60, 120].map((a) => `<line x1="${f(x - Math.cos(a * Math.PI / 180) * r)}" y1="${f(y - Math.sin(a * Math.PI / 180) * r)}" x2="${f(x + Math.cos(a * Math.PI / 180) * r)}" y2="${f(y + Math.sin(a * Math.PI / 180) * r)}"/>`).join('')}</g>`;
+    else if (c.motif === 'feather') s += `<path d="M ${P(x, y)} q ${f(r)} ${f(-r * 1.6)} ${f(r * 0.4)} ${f(-r * 3)} q ${f(-r * 1.2)} ${f(r * 1.2)} ${f(-r * 0.4)} ${f(r * 3)} Z" fill="${col}" opacity="${o}"/>`;
+    else if (c.motif === 'rose') s += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r * 0.8)}" fill="${i % 2 ? c.pal.gem : c.pal.trim}" opacity="${(o * 0.6).toFixed(2)}"/>`;
+    else if (c.motif === 'cloud') s += `<path d="${cloudPath(x, y, r * 1.6, r, 6, 0.35, R)}" fill="${col}" opacity="${(o * 0.7).toFixed(2)}"/>`;
+  }
+  return s;
+}
+
+function wings(c) {
+  const one = (sx) => {
+    let d = `M ${P(150 + sx * 52, 262)} C ${P(150 + sx * 80, 200)} ${P(150 + sx * 128, 186)} ${P(150 + sx * 138, 206)}`;
+    d += ` Q ${P(150 + sx * 124, 214)} ${P(150 + sx * 134, 230)} Q ${P(150 + sx * 116, 236)} ${P(150 + sx * 124, 254)} Q ${P(150 + sx * 104, 256)} ${P(150 + sx * 108, 274)} Q ${P(150 + sx * 84, 272)} ${P(150 + sx * 52, 262)} Z`;
+    return `<path d="${d}" fill="#ffffff" stroke="${c.hair.line}" stroke-width="1.4"/>` +
+      `<path d="M ${P(150 + sx * 70, 246)} Q ${P(150 + sx * 100, 226)} ${P(150 + sx * 124, 214)} M ${P(150 + sx * 72, 258)} Q ${P(150 + sx * 98, 246)} ${P(150 + sx * 118, 240)}" stroke="${c.hair.line}" stroke-width="1" fill="none" opacity=".6"/>`;
+  };
+  return one(-1) + one(1);
+}
+
+function backHair(c, id, R) {
+  const fill = c.hair.inner ? `url(#${id}hin)` : `url(#${id}hair)`;
+  let s = `<path d="${cloudPath(150, 146, 86, 84, 20, 0.16, R)}" fill="${fill}" stroke="${c.hair.line}" stroke-width="1.6"/>`;
+  // 外側の毛束(内側カラーの場合は外側を元の色で覆う)
+  if (c.hair.inner) s += `<path d="${cloudPath(150, 136, 84, 70, 18, 0.14, R, Math.PI * 0.95, Math.PI * 2.05, false)} Q 150 150 ${P(150 - 84 * Math.cos(Math.PI * 0.05), 136 + 70 * Math.sin(Math.PI * 0.05))} Z" fill="url(#${id}hair)"/>`;
+  return s;
+}
+
+function torso(c, id) {
+  const p = c.pal;
+  const body = `M 26 360 C 30 302, 78 270, 124 256 L 176 256 C 222 270, 270 302, 274 360 Z`;
+  const neck = `<path d="M 137 196 L 137 250 Q 150 258 163 250 L 163 196 Z" fill="${SKIN.base}"/>` +
+    `<path d="M 137 204 Q 150 224 163 204 L 163 216 Q 150 232 137 216 Z" fill="${SKIN.shade}"/>`;
+  let s = '';
+  const trimW = 2.4;
+  const lapels = (col) =>
+    `<path d="M 124 256 L 150 306 L 141 334 L 108 270 Z" fill="${col}" stroke="${p.trim}" stroke-width="${trimW}" stroke-linejoin="round"/>` +
+    `<path d="M 176 256 L 150 306 L 159 334 L 192 270 Z" fill="${col}" stroke="${p.trim}" stroke-width="${trimW}" stroke-linejoin="round"/>`;
+  const shirtV = `<path d="M 128 252 L 150 308 L 172 252 Z" fill="${p.shirt}"/>`;
+  const stand = (col, h = 22) => `<path d="M 130 ${244 - h + 22} Q 150 ${238 - h + 22} 170 ${244 - h + 22} L 172 262 Q 150 270 128 262 Z" fill="${col}" stroke="${p.trim}" stroke-width="${trimW}"/>`;
+  const buttons = (xs, ys) => xs.flatMap((x) => ys.map((y) => `<circle cx="${x}" cy="${y}" r="3.4" fill="${p.trim}"/><circle cx="${x - 1}" cy="${y - 1}" r="1.1" fill="#fff" opacity=".7"/>`)).join('');
+  const epaulette = (sx) => `<ellipse cx="${150 + sx * 82}" cy="280" rx="22" ry="9" transform="rotate(${sx * 24} ${150 + sx * 82} 280)" fill="${p.trim}"/>` +
+    Array.from({ length: 6 }, (_, i) => `<line x1="${f(150 + sx * (66 + i * 6))}" y1="${f(284 + i * 2.6)}" x2="${f(150 + sx * (64 + i * 6))}" y2="${f(298 + i * 2.6)}" stroke="${p.trim}" stroke-width="2" stroke-linecap="round"/>`).join('');
+  const bow = (x, y, col) => `<path d="M ${x} ${y} L ${x - 16} ${y - 9} Q ${x - 20} ${y} ${x - 16} ${y + 9} Z M ${x} ${y} L ${x + 16} ${y - 9} Q ${x + 20} ${y} ${x + 16} ${y + 9} Z" fill="${col}" stroke="${p.trim}" stroke-width="1.4"/>` +
+    `<path d="M ${x - 3} ${y + 4} L ${x - 8} ${y + 26} L ${x - 2} ${y + 22} Z M ${x + 3} ${y + 4} L ${x + 8} ${y + 26} L ${x + 2} ${y + 22} Z" fill="${col}"/>` +
+    `<rect x="${x - 4}" y="${y - 5}" width="8" height="10" rx="3" fill="${p.trim}"/>`;
+  const jabot = (x, y) => [0, 1, 2, 3].map((i) => `<path d="M ${x - 14 + i * 2} ${y + i * 9} Q ${x} ${y + 10 + i * 9} ${x + 14 - i * 2} ${y + i * 9} Q ${x + 10 - i * 2} ${y + 14 + i * 9} ${x} ${y + 15 + i * 9} Q ${x - 10 + i * 2} ${y + 14 + i * 9} ${x - 14 + i * 2} ${y + i * 9} Z" fill="${p.shirt}" stroke="#c9c2b4" stroke-width="1"/>`).join('');
+
+  switch (c.outfit) {
+    case 'angel': {
+      s += `<path d="${body}" fill="${p.main}" stroke="${c.hair.line}" stroke-width="1.4"/>`;
+      s += neck;
+      // ケープ (スカラップ状の縁)
+      let cape = `M 112 252 Q 150 244 188 252 C 222 262, 250 282, 258 306`;
+      for (let i = 0; i < 8; i++) {
+        const x0 = 258 - i * 27, x1 = x0 - 27;
+        cape += ` Q ${P((x0 + x1) / 2, 330 - Math.sin((i / 7) * Math.PI) * 6)} ${P(x1, 306 + Math.sin(((i + 1) / 8) * Math.PI) * 8)}`;
+      }
+      cape += ` C 50 282, 78 262, 112 252 Z`;
+      s += `<path d="${cape}" fill="${p.sub}" stroke="${p.trim}" stroke-width="2.6" stroke-linejoin="round"/>`;
+      s += stand(p.main, 26);
+      s += `<path d="M 150 272 L 150 360" stroke="${p.trim}" stroke-width="3"/>`;
+      s += `<path d="M 116 268 Q 150 300 184 268" fill="none" stroke="${p.trim}" stroke-width="1.6" stroke-dasharray="3 3"/>`;
+      s += gem(150, 264, 6, p.gem, p.trim);
+      break;
+    }
+    case 'idol': {
+      s += `<path d="${body}" fill="${p.main}"/>` + neck + shirtV;
+      s += lapels(p.main);
+      s += `<path d="M 124 256 L 150 306 L 176 256" fill="none" stroke="${p.sub}" stroke-width="1.2"/>`;
+      // 肩のフリル
+      s += `<path d="${cloudPath(66, 286, 30, 14, 7, 0.4, rng(5))}" fill="${p.sub}" stroke="${p.trim}" stroke-width="1.4"/>`;
+      s += `<path d="${cloudPath(234, 286, 30, 14, 7, 0.4, rng(6))}" fill="${p.sub}" stroke="${p.trim}" stroke-width="1.4"/>`;
+      s += stand(p.main, 24);
+      s += bow(150, 270, p.gem);
+      s += `<path d="${starPath(196, 300, 9)}" fill="${p.trim}"/>` + `<path d="${starPath(196, 300, 4)}" fill="#fff"/>`;
+      s += buttons([118, 182], [318, 340]);
+      break;
+    }
+    case 'prince': {
+      s += `<path d="${body}" fill="${p.main}" stroke="${c.hair.line}" stroke-width="1.2"/>` + neck + shirtV;
+      s += lapels(p.sub);
+      s += `<path d="M 70 290 L 230 360 L 204 360 L 62 300 Z" fill="${p.sash}" opacity=".9"/>`;
+      s += epaulette(-1) + epaulette(1);
+      s += jabot(150, 254);
+      s += gem(150, 266, 7, p.gem, p.trim);
+      s += buttons([122, 178], [318, 342]);
+      break;
+    }
+    case 'gothic': {
+      s += `<path d="${body}" fill="${p.main}"/>` + neck + shirtV;
+      s += lapels(p.sub);
+      s += `<path d="M 128 252 Q 150 262 172 252" fill="none" stroke="#e9e3d6" stroke-width="3" stroke-dasharray="2 2.5"/>`;
+      s += jabot(150, 258);
+      s += `<path d="M 110 300 Q 150 336 190 300" fill="none" stroke="${p.trim}" stroke-width="1.8" stroke-dasharray="4 2"/>`;
+      s += `<path d="M 147 268 h 6 v 7 h 7 v 6 h -7 v 13 h -6 v -13 h -7 v -6 h 7 Z" fill="${p.trim}"/>` + gem(150, 278, 3, p.gem, p.trim);
+      s += buttons([118, 182], [322, 344]);
+      break;
+    }
+    case 'marine': {
+      // セーラー襟
+      s += `<path d="${body}" fill="${p.main}" stroke="${c.hair.line}" stroke-width="1.2"/>` + neck;
+      s += `<path d="M 118 254 L 52 292 L 76 336 L 150 318 L 224 336 L 248 292 L 182 254 L 150 312 Z" fill="${p.sub}" stroke="${p.trim}" stroke-width="2"/>`;
+      s += `<path d="M 64 296 L 82 328 M 236 296 L 218 328" stroke="#fff" stroke-width="3"/>`;
+      s += `<path d="M 72 293 L 89 324 M 228 293 L 211 324" stroke="#fff" stroke-width="1.4"/>`;
+      s += `<path d="M 128 254 L 150 300 L 172 254 Z" fill="${p.shirt}"/>`;
+      s += bow(150, 304, p.gem);
+      s += buttons([110, 190], [344]);
+      break;
+    }
+    case 'mage': {
+      s += `<path d="${body}" fill="${p.shirt}"/>` + neck;
+      // ケープ
+      s += `<path d="M 118 250 Q 150 242 182 250 C 224 262, 262 296, 278 360 L 22 360 C 38 296, 76 262, 118 250 Z" fill="${p.main}" stroke="${p.trim}" stroke-width="2.4"/>`;
+      s += `<path d="M 150 262 L 150 360" stroke="${p.sub}" stroke-width="1.2" opacity=".6"/>`;
+      const R2 = rng(c.seed + 9);
+      const st = Array.from({ length: 7 }, () => [40 + R2() * 220, 285 + R2() * 70]).filter(([x, y]) => Math.abs(x - 150) > 20 && y > 250 + Math.abs(x - 150) * 0.3);
+      s += st.map(([x, y]) => `<path d="${starPath(x, y, 3.2, 4, 0.3)}" fill="${p.trim}"/>`).join('');
+      if (st.length > 1) s += `<polyline points="${st.slice(0, 4).map(([x, y]) => P(x, y)).join(' ')}" fill="none" stroke="${p.sub}" stroke-width=".8" opacity=".8"/>`;
+      s += `<path d="M 126 258 Q 150 270 174 258" fill="none" stroke="${p.trim}" stroke-width="2"/>`;
+      s += gem(150, 268, 9, p.gem, p.trim);
+      break;
+    }
+    case 'chinese': {
+      s += `<path d="${body}" fill="${p.main}" stroke="${c.hair.line}" stroke-width="1.2"/>` + neck;
+      s += `<path d="M 132 240 Q 150 236 168 240 L 170 262 Q 150 268 130 262 Z" fill="${p.main}" stroke="${p.sub}" stroke-width="3"/>`;
+      s += `<path d="M 150 264 C 172 268, 186 284, 198 312 L 214 360" fill="none" stroke="${p.sub}" stroke-width="7"/>`;
+      s += `<path d="M 150 264 C 172 268, 186 284, 198 312 L 214 360" fill="none" stroke="${p.trim}" stroke-width="1.6" stroke-dasharray="1 3"/>`;
+      s += [[166, 276], [182, 292], [194, 312]].map(([x, y]) => `<path d="M ${x - 8} ${y} h 16" stroke="${p.trim}" stroke-width="2.6" stroke-linecap="round"/><circle cx="${x + 9}" cy="${y}" r="3" fill="${p.trim}"/>`).join('');
+      s += `<path d="${cloudPath(92, 320, 18, 9, 6, 0.4, rng(c.seed))}" fill="none" stroke="${p.trim}" stroke-width="1.4"/>`;
+      s += `<path d="M 40 344 Q 70 330 96 340" fill="none" stroke="${p.sub}" stroke-width="5"/>`;
+      break;
+    }
+    case 'military': {
+      s += `<path d="${body}" fill="${p.main}" stroke="${c.hair.line}" stroke-width="1.2"/>` + neck;
+      s += `<path d="M 150 262 L 150 360" stroke="${p.sub}" stroke-width="4"/>`;
+      s += stand(p.sub, 24);
+      s += epaulette(-1) + epaulette(1);
+      // 飾緒
+      s += [0, 1, 2].map((i) => `<path d="M 226 ${284 + i * 3} Q ${196 - i * 6} ${316 + i * 10} 158 ${296 + i * 6}" fill="none" stroke="${p.trim}" stroke-width="2.2"/>`).join('');
+      s += buttons([136, 164], [284, 306, 328, 350]);
+      s += `<rect x="92" y="300" width="26" height="8" rx="1.5" fill="${p.sub}"/><rect x="92" y="300" width="9" height="8" fill="${p.gem}"/><rect x="109" y="300" width="9" height="8" fill="${p.trim}"/>`;
+      s += `<path d="${starPath(105, 322, 8, 8, 0.6)}" fill="${p.trim}"/>` + gem(105, 322, 3, p.gem, p.trim);
+      break;
+    }
+    case 'fur': {
+      s += `<path d="${body}" fill="${p.main}"/>` + neck + shirtV;
+      s += `<path d="M 150 310 L 150 360" stroke="#ffffff" stroke-width="1.4" opacity=".6"/>`;
+      s += `<path d="${cloudPath(150, 268, 92, 26, 24, 0.22, rng(c.seed + 3))}" fill="${p.sub}" stroke="#d9cfbf" stroke-width="1.4"/>`;
+      s += `<path d="M 128 256 Q 150 278 172 256" fill="none" stroke="${p.trim}" stroke-width="1.6"/>`;
+      s += `<path d="M 144 276 L 150 292 L 156 276 Z" fill="${p.trim}"/>` + gem(150, 280, 6, p.gem, p.trim);
+      s += buttons([128, 172], [322, 344]);
+      break;
+    }
+    case 'hoodie': {
+      // フード(首の後ろ)
+      s += `<path d="M 96 268 Q 150 214 204 268 Q 150 254 96 268 Z" fill="${p.main}"/>`;
+      s += `<path d="${body}" fill="${p.main}"/>` + neck;
+      s += `<path d="M 100 266 Q 150 296 200 266 Q 186 258 172 256 Q 150 280 128 256 Q 114 258 100 266 Z" fill="${p.main}" stroke="${p.trim}" stroke-width="2"/>`;
+      s += `<path d="M 138 270 L 136 316 M 162 270 L 164 316" stroke="${p.sub}" stroke-width="2.4"/>`;
+      s += `<rect x="132" y="314" width="8" height="12" rx="2" fill="${p.trim}"/><rect x="160" y="314" width="8" height="12" rx="2" fill="${p.trim}"/>`;
+      // 胸の王冠刺繍
+      s += `<path d="M 186 316 L 190 300 L 198 310 L 204 296 L 210 310 L 218 300 L 222 316 Z" fill="none" stroke="${p.trim}" stroke-width="2" stroke-linejoin="round"/>`;
+      s += `<path d="M 184 322 Q 203 330 224 322" fill="none" stroke="${p.trim}" stroke-width="1.6"/>`;
+      s += `<path d="M 40 350 Q 70 340 92 350 M 208 350 Q 232 340 260 350" fill="none" stroke="${p.trim}" stroke-width="1.4" stroke-dasharray="4 3"/>`;
+      break;
+    }
+  }
+  return s;
+}
+
+function face(c, id) {
+  const egg = `M 150 92 C 186 92, 204 118, 203 150 C 202 178, 186 200, 162 210 Q 150 216, 138 210 C 114 200, 98 178, 97 150 C 96 118, 114 92, 150 92 Z`;
+  let s = `<ellipse cx="98" cy="164" rx="7" ry="12" fill="${SKIN.base}" stroke="${SKIN.line}" stroke-width="1.2"/>` +
+    `<ellipse cx="202" cy="164" rx="7" ry="12" fill="${SKIN.base}" stroke="${SKIN.line}" stroke-width="1.2"/>`;
+  s += `<path d="${egg}" fill="url(#${id}skin)" stroke="${SKIN.line}" stroke-width="1.4"/>`;
+  s += `<ellipse cx="150" cy="128" rx="54" ry="24" fill="${SKIN.shade}" opacity=".7"/>`;
+  // ほっぺ
+  s += `<ellipse cx="117" cy="182" rx="11" ry="5.5" fill="${SKIN.blush}" opacity=".35"/><ellipse cx="183" cy="182" rx="11" ry="5.5" fill="${SKIN.blush}" opacity=".35"/>`;
+  s += [112, 117, 122].map((x) => `<line x1="${x}" y1="184" x2="${x + 3}" y2="179" stroke="${SKIN.blush}" stroke-width="1" opacity=".6"/>`).join('');
+  s += [178, 183, 188].map((x) => `<line x1="${x}" y1="184" x2="${x + 3}" y2="179" stroke="${SKIN.blush}" stroke-width="1" opacity=".6"/>`).join('');
+  s += eye(c, id, 126, 162, -1) + eye(c, id, 174, 162, 1);
+  // 鼻
+  s += `<path d="M 151 178 q 1.5 3 -1.5 4" fill="none" stroke="${SKIN.line}" stroke-width="1.2" stroke-linecap="round"/>`;
+  s += mouth(c.mouth);
+  return s;
+}
+
+function eye(c, id, cx, cy, s) {
+  const E = c.eye, d = E.droop;
+  const inner = [cx - s * 12, cy - 1];
+  const outer = [cx + s * 15, cy - 5 + d];
+  const upper = `M ${P(...inner)} Q ${P(cx - s * 7, cy - 15)} ${P(cx + s * 2, cy - 15)} Q ${P(cx + s * 12, cy - 15 + d * 0.3)} ${P(...outer)}`;
+  const shape = `${upper} Q ${P(cx + s * 11, cy + 12)} ${P(cx + s * 1, cy + 12)} Q ${P(cx - s * 9, cy + 11)} ${P(...inner)} Z`;
+  const cid = `${id}e${s > 0 ? 'r' : 'l'}`;
+  let o = `<clipPath id="${cid}"><path d="${shape}"/></clipPath>`;
+  o += `<path d="${shape}" fill="#ffffff"/>`;
+  o += `<g clip-path="url(#${cid})">`;
+  o += `<ellipse cx="${cx + s}" cy="${cy + 1}" rx="10.5" ry="13" fill="url(#${id}iris)" stroke="${E.deep}" stroke-width="1.2"/>`;
+  o += `<ellipse cx="${cx + s}" cy="${cy + 2}" rx="4.6" ry="6.4" fill="${E.deep}"/>`;
+  o += `<ellipse cx="${cx + s}" cy="${cy + 9}" rx="6.5" ry="3" fill="#ffffff" opacity=".35"/>`;
+  o += `<rect x="${cx - 20}" y="${cy - 18}" width="40" height="8" fill="${E.deep}" opacity=".22"/>`;
+  o += `<circle cx="${cx - 3.5 + s}" cy="${cy - 5}" r="3.6" fill="#fff"/><circle cx="${cx + 4 + s}" cy="${cy + 6}" r="1.6" fill="#fff"/>`;
+  o += `</g>`;
+  const lash = '#3a2a2e';
+  o += `<path d="${upper}" fill="none" stroke="${lash}" stroke-width="3.4" stroke-linecap="round"/>`;
+  o += `<path d="M ${P(outer[0] - s * 3, outer[1] + 1)} L ${P(outer[0] + s * 4, outer[1] - 3)} L ${P(outer[0] - s * 1, outer[1] - 3)} Z" fill="${lash}"/>`;
+  o += `<path d="M ${P(cx - s * 5, cy - 20)} Q ${P(cx + s * 5, cy - 22)} ${P(cx + s * 13, cy - 15 + d * 0.3)}" fill="none" stroke="${lash}" stroke-width="1" opacity=".45"/>`;
+  o += `<path d="M ${P(cx + s * 3, cy + 12)} Q ${P(cx + s * 9, cy + 11)} ${P(cx + s * 13, cy + 5 + d * 0.5)}" fill="none" stroke="${lash}" stroke-width="1.1" opacity=".55"/>`;
+  return o;
+}
+
+function brows(c) {
+  const col = c.hair.line;
+  const b = (cx, s) => `<path d="M ${P(cx - s * 9, 140)} Q ${P(cx + s * 1, 135 - (c.eye.droop < 0 ? 1 : 0))} ${P(cx + s * 13, 140 + c.eye.droop * 0.5)}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>`;
+  return b(126, -1) + b(174, 1);
+}
+
+function mouth(type) {
+  const L = '#a8574f';
+  switch (type) {
+    case 'open':
+      return `<path d="M 142 190 Q 150 191 158 190 Q 156 201 150 201 Q 144 201 142 190 Z" fill="#c8605a" stroke="${L}" stroke-width="1.2"/><ellipse cx="150" cy="198" rx="4" ry="2" fill="#f19a96"/>`;
+    case 'cat':
+      return `<path d="M 141 190 Q 145.5 195.5 150 190 Q 154.5 195.5 159 190" fill="none" stroke="${L}" stroke-width="1.6" stroke-linecap="round"/>`;
+    case 'smirk':
+      return `<path d="M 143 193 Q 151 196 158 189" fill="none" stroke="${L}" stroke-width="1.6" stroke-linecap="round"/>`;
+    case 'neutral':
+      return `<path d="M 145 193 Q 150 194.5 155 193" fill="none" stroke="${L}" stroke-width="1.6" stroke-linecap="round"/>`;
+    default:
+      return `<path d="M 142 190 Q 150 197 158 190" fill="none" stroke="${L}" stroke-width="1.6" stroke-linecap="round"/>`;
+  }
+}
+
+function frontHair(c, id, R) {
+  const H = c.hair;
+  // 頭頂のモコモコ輪郭 (左下 → 頭頂 → 右下)
+  const a0 = (165 * Math.PI) / 180, a1 = (375 * Math.PI) / 180;
+  let d = cloudPath(150, 140, 74, 76, 14, 0.09, R, a0, a1, false);
+  // 右のサイド毛束
+  d += ` C 224 180, 219 200, 207 207 Q 196 199, 198 183 Q 196 166, 192 148`;
+  // 前髪 (マッシュの丸いライン + くるっとした毛先)
+  const edge = (x) => 124 + ((x - 150) / 45) ** 2 * 14;
+  const k = 6 + Math.floor(R() * 2);
+  const valleys = [];
+  for (let i = 0; i <= k; i++) {
+    const x = 192 - (84 * i) / k + (i && i < k ? (R() - 0.5) * 5 : 0);
+    valleys.push([x, i === 0 || i === k ? 148 : edge(x) - 5 - R() * 4]);
+  }
+  const tips = [];
+  for (let i = 0; i < k; i++) {
+    const [x0, y0] = valleys[i], [x1, y1] = valleys[i + 1];
+    const mx = (x0 + x1) / 2;
+    const curl = (mx > 150 ? 1 : -1) * (2 + R() * 3);
+    const tip = [mx + curl, edge(mx) + 9 + R() * 8];
+    tips.push(tip);
+    d += ` Q ${P(x0 - (x0 - tip[0]) * 0.15, tip[1] + 1)} ${P(...tip)}`;
+    d += ` Q ${P(tip[0] - (tip[0] - x1) * 0.55, tip[1] - 3)} ${P(x1, y1)}`;
+  }
+  // 左のサイド毛束
+  d += ` Q 104 166, 102 183 Q 104 199, 93 207 C 81 200, 76 180, ${P(150 + Math.cos(a0) * 74, 140 + Math.sin(a0) * 76)} Z`;
+
+  let s = `<path d="${d}" fill="url(#${id}hair)" stroke="${H.line}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  // 毛束の筋
+  for (let i = 1; i < valleys.length - 1; i++) {
+    const [x, y] = valleys[i];
+    s += `<path d="M ${P(x, y)} Q ${P(x + (x - 150) * 0.1, y - 22)} ${P(150 + (x - 150) * 0.55, 86 + R() * 8)}" fill="none" stroke="${H.line}" stroke-width="1.1" opacity=".55"/>`;
+  }
+  s += `<path d="M 204 170 Q 210 186 205 200 M 96 170 Q 90 186 95 200" fill="none" stroke="${H.line}" stroke-width="1" opacity=".5"/>`;
+  // パーマのくるくる
+  const spots = [[88, 118], [212, 118], [80, 150], [220, 150], [112, 84], [188, 84], [150, 74], [132, 100], [170, 100]];
+  for (const [x, y] of spots) {
+    const sx = x < 150 ? -1 : 1;
+    s += `<path d="M ${P(x, y)} q ${f(sx * 6)} -7 ${f(sx * 10)} 0 q ${f(sx * 2)} 6 ${f(-sx * 4)} 6" fill="none" stroke="${H.line}" stroke-width="1.2" opacity=".55" stroke-linecap="round"/>`;
+  }
+  // 天使の輪 (ツヤ)
+  s += `<path d="M 104 104 Q 150 78 196 104" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 6 22 5 10 7" opacity=".75"/>`;
+  // アホ毛
+  s += `<path d="M 150 72 C 145 50, 170 42, 173 56 C 175 66, 162 67, 164 58" fill="none" stroke="${H.line}" stroke-width="4.4" stroke-linecap="round"/>`;
+  s += `<path d="M 150 72 C 145 50, 170 42, 173 56 C 175 66, 162 67, 164 58" fill="none" stroke="${H.mid}" stroke-width="2.4" stroke-linecap="round"/>`;
+  return s;
+}
+
+function accessories(c, phase) {
+  const p = c.pal, out = [];
+  for (const a of c.acc) {
+    if (phase === 'back' && a === 'wings') out.push(wings(c));
+    if (phase !== 'front') continue;
+    switch (a) {
+      case 'halo':
+        out.push(`<ellipse cx="150" cy="50" rx="38" ry="9" fill="none" stroke="${p.trim}" stroke-width="5" opacity=".9"/><ellipse cx="150" cy="50" rx="38" ry="9" fill="none" stroke="#fff6cf" stroke-width="1.6"/>`);
+        break;
+      case 'earring':
+        out.push(`<line x1="207" y1="200" x2="207" y2="212" stroke="${p.trim}" stroke-width="1.4"/>` + gem(207, 216, 4, p.gem, p.trim));
+        break;
+      case 'crossEarring':
+        out.push(`<line x1="207" y1="200" x2="207" y2="210" stroke="${p.trim}" stroke-width="1.4"/><path d="M 205.5 210 h 3 v 4 h 4 v 3 h -4 v 8 h -3 v -8 h -4 v -3 h 4 Z" fill="${p.trim}"/>`);
+        break;
+      case 'tassel':
+        out.push(`<line x1="207" y1="200" x2="207" y2="210" stroke="${p.trim}" stroke-width="1.4"/>` + gem(207, 212, 3, p.gem, p.trim) + `<path d="M 203 215 L 201 236 M 205.5 215 L 205 238 M 208.5 215 L 209 238 M 211 215 L 213 236" stroke="${p.sub}" stroke-width="1.6"/>`);
+        break;
+      case 'earcuff':
+        out.push(`<path d="M 92 186 q -5 6 0 12" fill="none" stroke="${p.trim}" stroke-width="2.4" stroke-linecap="round"/><circle cx="90" cy="200" r="2" fill="${p.trim}"/>`);
+        break;
+      case 'starpin':
+        out.push(`<path d="${starPath(188, 112, 10)}" fill="${p.trim}" stroke="#fff" stroke-width="1.2"/><path d="${starPath(202, 124, 5)}" fill="${p.gem}"/>`);
+        break;
+      case 'moonpin':
+        out.push(`<path d="M 190 100 a 11 11 0 1 0 10 16 a 8.5 8.5 0 1 1 -10 -16 Z" fill="${p.trim}" stroke="#fff" stroke-width="1"/><path d="${starPath(184, 126, 4, 4, 0.3)}" fill="${p.trim}"/>`);
+        break;
+      case 'anchorpin':
+        out.push(`<g stroke="${p.trim}" stroke-width="2.6" fill="none" stroke-linecap="round"><circle cx="190" cy="104" r="3"/><line x1="190" y1="107" x2="190" y2="124"/><line x1="183" y1="111" x2="197" y2="111"/><path d="M 182 118 q 8 10 16 0"/></g>`);
+        break;
+      case 'crown':
+        out.push(`<g transform="rotate(14 182 72)"><path d="M 164 82 L 166 62 L 174 72 L 182 58 L 190 72 L 198 62 L 200 82 Z" fill="${p.trim}" stroke="#8a6a1c" stroke-width="1.2" stroke-linejoin="round"/>${gem(182, 75, 3, p.gem, p.trim)}</g>`);
+        break;
+      case 'headphones':
+        out.push(`<path d="M 84 150 C 80 70, 220 70, 216 150" fill="none" stroke="${p.main}" stroke-width="7" stroke-linecap="round"/>` +
+          `<rect x="74" y="140" width="22" height="38" rx="10" fill="${p.sub}" stroke="${p.main}" stroke-width="3"/><rect x="204" y="140" width="22" height="38" rx="10" fill="${p.sub}" stroke="${p.main}" stroke-width="3"/>` +
+          `<circle cx="85" cy="159" r="4" fill="${p.gem}"/><circle cx="215" cy="159" r="4" fill="${p.gem}"/>`);
+        break;
+    }
+  }
+  return out.join('');
+}
+
+function portrait(c, uid) {
+  const id = `c${uid}`;
+  const R = rng(c.seed);
+  const defs =
+    `<defs>` +
+    `<linearGradient id="${id}bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c.bg[0]}"/><stop offset="1" stop-color="${c.bg[1]}"/></linearGradient>` +
+    `<linearGradient id="${id}hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.hair.top}"/><stop offset=".55" stop-color="${c.hair.mid}"/><stop offset="1" stop-color="${c.hair.tip}"/></linearGradient>` +
+    `<linearGradient id="${id}hin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.hair.mid}"/><stop offset="1" stop-color="${c.hair.inner || c.hair.tip}"/></linearGradient>` +
+    `<linearGradient id="${id}iris" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.eye.deep}"/><stop offset=".55" stop-color="${c.eye.color}"/><stop offset="1" stop-color="#ffffff" stop-opacity=".9"/></linearGradient>` +
+    `<radialGradient id="${id}skin" cx=".5" cy=".7" r=".7"><stop offset="0" stop-color="#fff6f1"/><stop offset="1" stop-color="${SKIN.base}"/></radialGradient>` +
+    `</defs>`;
+  const body =
+    background(c, id, rng(c.seed + 1)) +
+    backHair(c, id, R) +
+    accessories(c, 'back') +
+    torso(c, id) +
+    face(c, id) +
+    frontHair(c, id, R) +
+    brows(c) +
+    accessories(c, 'front');
+  return `<svg viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${c.name}の立ち絵ラフ">${defs}${body}</svg>`;
+}
+
+// ===== ページ =====
+const grid = document.getElementById('grid');
+const swatchesOf = (c) => [c.hair.top, c.hair.tip, c.hair.inner, c.eye.color, c.pal.main, c.pal.trim].filter(Boolean);
+
+CHARS.forEach((c, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'card';
+  btn.type = 'button';
+  btn.id = `card-${i + 1}`;
+  btn.innerHTML =
+    portrait(c, i) +
+    `<div class="info"><div class="no">No.${String(i + 1).padStart(2, '0')}</div>` +
+    `<div class="name">${c.name}<small>${c.yomi}</small></div>` +
+    `<p class="concept">${c.concept}</p>` +
+    `<div class="swatches">${swatchesOf(c).map((col) => `<span style="background:${col}"></span>`).join('')}</div></div>`;
+  btn.addEventListener('click', () => openDetail(i));
+  grid.append(btn);
+});
+
+const dlg = document.getElementById('dlg');
+function openDetail(i) {
+  const c = CHARS[i];
+  document.getElementById('dlgArt').innerHTML = portrait(c, `d${i}`);
+  document.getElementById('dlgNo').textContent = `No.${String(i + 1).padStart(2, '0')}`;
+  document.getElementById('dlgName').innerHTML = `${c.name}<small>${c.yomi}</small>`;
+  document.getElementById('dlgConcept').textContent = c.concept;
+  document.getElementById('dlgList').innerHTML =
+    `<dt>髪</dt><dd>${c.hairText}</dd><dt>目</dt><dd>${c.eyeText}</dd><dt>衣装</dt><dd>${c.outfitText}</dd>`;
+  document.getElementById('dlgSw').innerHTML = swatchesOf(c).map((col) => `<span style="background:${col}" title="${col}"></span>`).join('');
+  dlg.showModal();
+}
+document.getElementById('dlgClose').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+</script>
