@@ -1,0 +1,68 @@
+:root {
+  color-scheme: dark;
+  --bg: #121318;
+  --panel: #1c1e26;
+  --line: #2c2f3a;
+  --text: #e8e9ee;
+  --muted: #9a9db0;
+  --accent: #6c8cff;
+  --ok: #3ccf8e;
+  --ng: #ff6b6b;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif; }
+header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+h1 { font-size: 18px; margin: 0; }
+h2 { font-size: 15px; margin: 0 0 10px; }
+h2 small { color: var(--muted); font-weight: normal; }
+main { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(340px, 460px); gap: 16px; padding: 16px 20px; align-items: start; }
+.preview { grid-row: span 6; position: sticky; top: 16px; }
+.preview iframe {
+  width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 10px;
+  background: repeating-conic-gradient(#2a2c35 0 25%, #22242c 0 50%) 0 0 / 24px 24px;
+}
+.obs { color: var(--muted); font-size: 13px; margin-top: 8px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.panel.hidden, .hidden { display: none; }
+.modes { display: grid; gap: 8px; }
+.modes label { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.modes label:has(input:checked) { border-color: var(--accent); background: #6c8cff1a; }
+.modes small { grid-column: 2; color: var(--muted); }
+.pill { font-size: 12px; padding: 2px 10px; border-radius: 99px; background: var(--line); }
+.pill.ok { background: #3ccf8e33; color: var(--ok); }
+.pill.ng { background: #ff6b6b33; color: var(--ng); }
+button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 0; background: var(--accent); color: #fff; cursor: pointer; }
+button.small { padding: 4px 10px; font-size: 13px; }
+button.on { background: var(--ng); }
+button:disabled { opacity: .5; }
+input, select, textarea { font: inherit; background: #0f1015; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+textarea { width: 100%; font-family: ui-monospace, monospace; }
+.field { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 8px; margin: 6px 0; }
+.field input[type=range] { padding: 0; }
+.check { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+.row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+.row > input, .row > select { flex: 1; min-width: 0; }
+.checks { gap: 16px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+.tab { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.tab.active { background: var(--line); color: var(--text); }
+.qrrow { display: flex; gap: 12px; align-items: flex-start; }
+.qrrow img { width: 140px; height: 140px; background: #fff; border-radius: 6px; flex: none; }
+.qrrow ol, .tabbody ol { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+#phoneUrls { width: 100%; margin-top: 8px; }
+.meter { position: relative; height: 10px; background: #0f1015; border-radius: 5px; overflow: hidden; margin: 8px 0; }
+#meterBar { height: 100%; width: 0; background: var(--ok); transition: width 50ms linear; }
+#meterGate { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ng); }
+.transcript { min-height: 44px; padding: 8px; border-radius: 6px; background: #0f1015; color: var(--muted); font-size: 13px; }
+.transcript b { color: var(--text); font-weight: normal; }
+.result { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.emotes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.emotes button { background: var(--line); }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--muted); }
+.hint { color: var(--muted); font-size: 12px; }
+code { background: #0f1015; padding: 1px 5px; border-radius: 4px; }
+@media (max-width: 860px) {
+  main { grid-template-columns: 1fr; }
+  .preview { position: static; grid-row: auto; }
+}

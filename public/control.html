@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VTuber コントロール</title>
+  <link rel="stylesheet" href="/control.css" />
+</head>
+<body>
+  <header>
+    <h1>🎮 VTuber コントロール</h1>
+    <span id="conn" class="pill">接続中…</span>
+  </header>
+
+  <main>
+    <section class="preview">
+      <iframe id="previewFrame" src="/avatar.html?debug=1" title="アバタープレビュー"></iframe>
+      <div class="obs">
+        OBS → ソース追加 →「ブラウザ」→ URL に
+        <code id="avatarUrl">http://localhost:3000/avatar.html</code>
+        幅 1920 / 高さ 1080 を指定(背景は透過されます)
+        <button id="copyAvatar" class="small">コピー</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>動かし方</h2>
+      <div class="modes">
+        <label><input type="radio" name="mode" value="tracking" /> <b>📱 iPhone トラッキング</b><small>カメラで顔の向き・目・口・眉を追従</small></label>
+        <label><input type="radio" name="mode" value="voice" /> <b>🎙️ 音声 + ローカル LLM</b><small>マイク音量で口パク、発言内容から LLM が表情を決定</small></label>
+        <label><input type="radio" name="mode" value="hybrid" /> <b>✨ ハイブリッド</b><small>iPhone トラッキング + 発言内容で表情を強調</small></label>
+      </div>
+    </section>
+
+    <section class="panel" data-show="tracking hybrid">
+      <h2>📱 iPhone 接続</h2>
+      <div class="tabs">
+        <button class="tab active" data-tab="web">Safari (アプリ不要)</button>
+        <button class="tab" data-tab="vts">VTube Studio アプリ (高精度)</button>
+      </div>
+      <div class="tabbody" data-tab="web">
+        <div class="qrrow">
+          <img id="qr" alt="QR コード" />
+          <ol>
+            <li>iPhone と PC を同じ Wi-Fi に接続</li>
+            <li>iPhone のカメラで QR を読み取る (または下の URL を開く)</li>
+            <li>「この接続ではプライバシーが保護されません」→「詳細を表示」→「Web サイトを閲覧」</li>
+            <li>「トラッキング開始」をタップしてカメラを許可</li>
+          </ol>
+        </div>
+        <select id="phoneUrls"></select>
+      </div>
+      <div class="tabbody hidden" data-tab="vts">
+        <ol>
+          <li>iPhone に「VTube Studio」をインストールして起動</li>
+          <li>設定 →「3rd Party PC Clients」を ON にし、表示される iPhone の IP を入力</li>
+        </ol>
+        <label class="field">iPhone の IP <input id="vtsPhoneIp" placeholder="192.168.0.20" data-cfg /></label>
+      </div>
+      <p>状態: <span id="trackStatus">-</span></p>
+      <button id="calibrate">正面をリセット (まっすぐ前を向いて押す)</button>
+    </section>
+
+    <section class="panel" data-show="voice hybrid">
+      <h2>🎙️ 音声 + LLM</h2>
+      <div class="row">
+        <select id="micSelect"><option value="">既定のマイク</option></select>
+        <button id="micBtn">マイク開始</button>
+      </div>
+      <div class="meter"><div id="meterBar"></div><div id="meterGate"></div></div>
+      <label class="field">口パク感度 <input type="range" id="micSensitivity" min="0.3" max="4" step="0.1" data-cfg /></label>
+      <label class="field">ノイズゲート <input type="range" id="micGate" min="0" max="0.15" step="0.005" data-cfg /></label>
+      <label class="check"><input type="checkbox" id="sttOn" checked /> 音声認識して表情を自動で変える (Chrome / Edge)</label>
+      <div class="transcript" id="transcript">（ここに認識結果が表示されます）</div>
+      <div id="emotionResult" class="result">-</div>
+
+      <details>
+        <summary>LLM 設定 (Ollama)</summary>
+        <label class="check"><input type="checkbox" id="useLlm" data-cfg /> ローカル LLM を使う (OFF ならキーワード判定のみ)</label>
+        <label class="field">Ollama URL <input id="ollamaUrl" data-cfg /></label>
+        <label class="field">モデル
+          <input id="llmModel" list="llmModels" data-cfg />
+          <datalist id="llmModels"></datalist>
+        </label>
+        <button id="reloadLlm" class="small">モデル一覧を取得</button>
+        <div class="row">
+          <input id="testText" placeholder="テスト: 例「うわっ、今のやばくない!?」" />
+          <button id="testBtn" class="small">判定</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>😊 手動で表情 <small>(このページにフォーカス中は 1〜8 キー)</small></h2>
+      <div class="emotes" id="emotes"></div>
+      <div class="emotes" id="gestures"></div>
+    </section>
+
+    <section class="panel">
+      <h2>🧍 アバター設定</h2>
+      <label class="field">モデル <select id="modelSelect"></select></label>
+      <label class="field">URL <input id="modelUrl" data-cfg /></label>
+      <p class="hint"><code>models/</code> フォルダに Live2D モデル (*.model3.json を含むフォルダ) を置くと一覧に出ます。</p>
+      <label class="field">大きさ <input type="range" id="scale" min="0.3" max="3" step="0.05" data-cfg /></label>
+      <label class="field">左右位置 <input type="range" id="offsetX" min="-0.5" max="0.5" step="0.01" data-cfg /></label>
+      <label class="field">上下位置 <input type="range" id="offsetY" min="-0.5" max="1" step="0.01" data-cfg /></label>
+      <label class="field">なめらかさ <input type="range" id="smoothing" min="0" max="0.9" step="0.05" data-cfg /></label>
+      <label class="field">表情の持続(秒) <input type="number" id="emotionHoldSec" min="1" max="20" step="0.5" data-cfg /></label>
+      <label class="check"><input type="checkbox" id="mirror" data-cfg /> 鏡写し (自分が右を向くと画面の右を向く)</label>
+      <div class="row checks">
+        <label class="check"><input type="checkbox" id="invertYaw" data-cfg /> 左右反転</label>
+        <label class="check"><input type="checkbox" id="invertPitch" data-cfg /> 上下反転</label>
+        <label class="check"><input type="checkbox" id="invertRoll" data-cfg /> 傾き反転</label>
+      </div>
+      <details>
+        <summary>モデル付属の表情ファイルを使う</summary>
+        <p class="hint">感情名 → モデルの Expression 名 を JSON で指定。例: <code>{"joy":"f01","angry":"f03"}</code><br />
+        感情名: neutral / joy / laugh / angry / sad / surprised / embarrassed / thinking</p>
+        <textarea id="expressionMap" rows="4"></textarea>
+        <button id="saveExpr" class="small">保存</button>
+      </details>
+    </section>
+  </main>
+
+  <script type="module" src="/control.js"></script>
+</body>
+</html>
