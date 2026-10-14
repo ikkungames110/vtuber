@@ -109,10 +109,11 @@ $('calibrate').onclick = () => conn.send({ type: 'calibrate' });
 
 // モデル一覧
 async function loadModels() {
-  const { local, default: def } = await (await fetch('/api/models')).json();
+  const { builtin, local, sample } = await (await fetch('/api/models')).json();
   const sel = $('modelSelect');
   sel.innerHTML = '';
-  sel.add(new Option('サンプル (Haru)', def));
+  for (const m of builtin) sel.add(new Option(m.name, m.url));
+  sel.add(new Option('サンプル (Haru)', sample));
   for (const m of local) sel.add(new Option(decodeURIComponent(m.replace('/models/', '')), m));
   sel.add(new Option('カスタム URL', ''));
   sel.onchange = () => {

@@ -22,9 +22,13 @@ const CONFIG_PATH = path.join(ROOT, 'config.json');
 const MODELS_DIR = path.join(ROOT, 'models');
 const CACHE_DIR = path.join(ROOT, 'cache');
 
+const SAMPLE_MODEL_URL = 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json';
+// 内蔵モデル (public/builtin/ の Canvas 描画モデル)
+const BUILTIN_MODELS = [{ url: 'builtin:angel', name: '氷色天使 (内蔵モデル)' }];
+
 const DEFAULT_CONFIG = {
   mode: 'tracking', // tracking | voice | hybrid
-  modelUrl: 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json',
+  modelUrl: BUILTIN_MODELS[0].url,
   scale: 2,
   offsetX: 0,
   offsetY: 0.5,
@@ -185,7 +189,7 @@ async function handle(req, res) {
       broadcast({ type: 'config', config });
       return json(res, config);
     }
-    if (p === '/api/models') return json(res, { local: listModels(), default: DEFAULT_CONFIG.modelUrl });
+    if (p === '/api/models') return json(res, { builtin: BUILTIN_MODELS, local: listModels(), sample: SAMPLE_MODEL_URL });
     if (p === '/api/info') {
       return json(res, {
         phoneUrls: lanAddresses().map((ip) => `https://${ip}:${HTTPS_PORT}/phone.html`),

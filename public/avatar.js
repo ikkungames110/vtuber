@@ -2,6 +2,7 @@
 // クエリ: ?bg=green (クロマキー用背景) / ?debug=1 (状態表示)
 import { connect } from '/lib/ws.js';
 import { EMOTION_PRESETS, gestureOffset } from '/lib/expression.js';
+import { createBuiltinModel } from '/builtin/angel.js';
 
 const qs = new URLSearchParams(location.search);
 const bg = qs.get('bg');
@@ -89,7 +90,8 @@ async function loadModel(url) {
   loadedUrl = url;
   showMsg('モデル読み込み中…');
   try {
-    const m = await PIXI.live2d.Live2DModel.from(url, { autoInteract: false });
+    // builtin:xxx は Canvas 描画の内蔵モデル (Live2D と同じパラメータ ID で動く)
+    const m = url.startsWith('builtin:') ? createBuiltinModel(url) : await PIXI.live2d.Live2DModel.from(url, { autoInteract: false });
     if (loadedUrl !== url) return m.destroy();
     if (model) {
       app.stage.removeChild(model);
@@ -102,7 +104,7 @@ async function loadModel(url) {
     im.motionManager.state.shouldRequestIdleMotion = () => false;
     im.eyeBlink = undefined;
     im.on('afterMotionUpdate', () => updateParams(im.coreModel));
-    model.anchor.set(0.5, 0.5);
+    model.anchor.set(0.5, model.anchorY ?? 0.5);
     app.stage.addChild(model);
     layout();
     showMsg(debug ? 'モデル読み込み完了' : '');
