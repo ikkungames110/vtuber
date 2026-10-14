@@ -1,5 +1,5 @@
 @echo off
-rem WSL 上のフォルダ (\\wsl.localhost\...) からでも動くように pushd でドライブを割り当てる
+rem pushd maps a drive letter so this also works from \\wsl.localhost\... paths
 pushd "%~dp0"
 if not exist node_modules (
   echo First-time setup...
