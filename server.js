@@ -148,12 +148,26 @@ function listModels() {
   return found;
 }
 
+// iPhone から届く可能性が高い順に並べた LAN の IPv4 アドレス
+// (WSL / Hyper-V / VirtualBox などの仮想アダプタやリンクローカルは除外)
 function lanAddresses() {
-  return Object.values(os.networkInterfaces())
-    .flat()
-    .filter((i) => i && i.family === 'IPv4' && !i.internal)
-    .map((i) => i.address);
+  const rank = (ip) => (ip.startsWith('192.168.') ? 0 : ip.startsWith('10.') ? 1 : 2);
+  return Object.entries(os.networkInterfaces())
+    .filter(([name]) => !/vEthernet|WSL|Hyper-V|VirtualBox|VMware|docker|br-|veth/i.test(name))
+    .flatMap(([, list]) => list ?? [])
+    .filter((i) => i.family === 'IPv4' && !i.internal && !i.address.startsWith('169.254.'))
+    .map((i) => i.address)
+    .sort((a, b) => rank(a) - rank(b));
 }
+
+// WSL2 の NAT モードで動いているか (この場合 iPhone からサーバーに届かない)
+const IS_WSL_NAT =
+  os.platform() === 'linux' &&
+  /microsoft/i.test(os.release()) &&
+  lanAddresses().every((ip) => ip.startsWith('172.'));
+const WSL_WARNING = IS_WSL_NAT
+  ? 'サーバーが WSL2 の中で動いているため、iPhone から接続できません。Windows 側で起動してください (WSL のターミナルなら `npm run start:win`、または start.bat をダブルクリック)。'
+  : '';
 
 // ---------- API ----------
 const history = [];
@@ -176,6 +190,7 @@ async function handle(req, res) {
       return json(res, {
         phoneUrls: lanAddresses().map((ip) => `https://${ip}:${HTTPS_PORT}/phone.html`),
         avatarUrl: `http://localhost:${HTTP_PORT}/avatar.html`,
+        warning: WSL_WARNING,
       });
     }
     if (p === '/api/qr.svg') {
@@ -312,4 +327,5 @@ const httpsServer = https.createServer(loadCert(), handle);
 attachWs(httpsServer);
 httpsServer.listen(HTTPS_PORT, () => {
   for (const ip of lanAddresses()) console.log(`iPhone 用         : https://${ip}:${HTTPS_PORT}/phone.html`);
+  if (WSL_WARNING) console.warn(`\n⚠ ${WSL_WARNING}\n`);
 });

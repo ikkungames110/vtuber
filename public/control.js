@@ -95,6 +95,8 @@ document.querySelectorAll('.tab').forEach((t) => {
 async function loadInfo() {
   const info = await (await fetch('/api/info')).json();
   $('avatarUrl').textContent = info.avatarUrl;
+  $('netWarning').textContent = info.warning ? `⚠ ${info.warning}` : '';
+  $('netWarning').classList.toggle('hidden', !info.warning);
   const sel = $('phoneUrls');
   sel.innerHTML = '';
   for (const u of info.phoneUrls) sel.add(new Option(u, u));

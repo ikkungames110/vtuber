@@ -94,8 +94,15 @@ Live2D 標準のパラメータ ID (`ParamAngleX`, `ParamEyeLOpen`, `ParamMouthO
 
 ## WSL2 で動かす場合
 
-ブラウザ・OBS (localhost) からはそのまま使えますが、iPhone から WSL2 内のサーバーには届きません。
-`%UserProfile%\.wslconfig` に以下を書いて `wsl --shutdown` で再起動すると繋がるようになります。
+ブラウザ・OBS (localhost) からはそのまま使えますが、**iPhone から WSL2 内のサーバーには届きません** (QR に `172.x.x.x` が出て読み込みが終わらない状態になります)。
+
+いちばん簡単なのは、WSL のターミナルから Windows 側の Node.js で起動する方法です (Windows に Node.js が必要)。
+
+```sh
+npm run start:win
+```
+
+または `%UserProfile%\.wslconfig` に以下を書いて `wsl --shutdown` で再起動する方法もあります。
 
 ```ini
 [wsl2]
