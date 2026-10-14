@@ -25,21 +25,43 @@ iPhone は 2 通りで接続できます。
 
 ## 起動
 
-**Windows で直接動かすのがおすすめ**です (iPhone から PC に繋ぐため)。
-フォルダ内の `start.bat` をダブルクリック、または:
+### 初回だけ
 
-```sh
-npm install
-npm start
-```
+1. Windows に [Node.js](https://nodejs.org/) (20 以上) をインストール
+2. このリポジトリを clone して依存パッケージを入れる
+
+   ```sh
+   git clone https://github.com/ikkungames110/vtuber.git
+   cd vtuber
+   npm install
+   ```
+
+3. (音声モードを使う場合) [Ollama](https://ollama.com/) をインストールしてモデルを入れる
+
+   ```sh
+   ollama pull qwen2.5:3b
+   ```
+
+### 毎回の起動
+
+iPhone から PC に繋ぐため、**サーバーは必ず Windows 側の Node.js で動かします**。
+
+| どこから起動する？ | 方法 |
+| --- | --- |
+| WSL のターミナル | `npm run start:win` |
+| Windows のエクスプローラー | フォルダ内の `start.bat` をダブルクリック |
+| Windows のターミナル (PowerShell など) | `npm start` |
+
+> ⚠ WSL のターミナルで `npm start` を使うと WSL の中で動いてしまい、iPhone から繋がりません (QR に `172.x.x.x` が出ます)。
 
 起動するとコンソールに URL が出ます。
 
-- コントロール画面: http://localhost:3000/control.html
+- コントロール画面: http://localhost:3000/control.html (ブラウザで開く)
 - OBS 用: http://localhost:3000/avatar.html
 - iPhone 用: `https://<PC の LAN IP>:3443/phone.html` (コントロール画面に QR が出ます)
 
 初回起動時に Windows ファイアウォールの確認が出たら「プライベートネットワーク」を許可してください。
+止めるときはコンソールで `Ctrl + C`。
 
 ## OBS の設定
 
