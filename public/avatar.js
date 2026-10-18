@@ -3,6 +3,7 @@
 import { connect } from '/lib/ws.js';
 import { EMOTION_PRESETS, gestureOffset } from '/lib/expression.js';
 import { createBuiltinModel } from '/builtin/angel.js';
+import { createPngModel, PNG_MODELS } from '/builtin/pngtuber.js';
 
 const qs = new URLSearchParams(location.search);
 const bg = qs.get('bg');
@@ -91,7 +92,10 @@ async function loadModel(url) {
   showMsg('モデル読み込み中…');
   try {
     // builtin:xxx は Canvas 描画の内蔵モデル (Live2D と同じパラメータ ID で動く)
-    const m = url.startsWith('builtin:') ? createBuiltinModel(url) : await PIXI.live2d.Live2DModel.from(url, { autoInteract: false });
+    const m =
+      url in PNG_MODELS ? createPngModel(url)
+      : url.startsWith('builtin:') ? createBuiltinModel(url)
+      : await PIXI.live2d.Live2DModel.from(url, { autoInteract: false });
     if (loadedUrl !== url) return m.destroy();
     if (model) {
       app.stage.removeChild(model);

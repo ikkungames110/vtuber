@@ -24,14 +24,18 @@ const CACHE_DIR = path.join(ROOT, 'cache');
 
 const SAMPLE_MODEL_URL = 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/haru/haru_greeter_t03.model3.json';
 // 内蔵モデル (public/builtin/ の Canvas 描画モデル)
-const BUILTIN_MODELS = [{ url: 'builtin:angel', name: '氷色天使 (内蔵モデル)' }];
+// scale / offsetY はモデルを選んだときに入れるおすすめの大きさ・位置
+const BUILTIN_MODELS = [
+  { url: 'builtin:hyoshoku', name: '氷色ビッシューネン (立ち絵 + 口パク)', scale: 1, offsetY: 0 },
+  { url: 'builtin:angel', name: '氷色天使 (内蔵モデル)', scale: 2, offsetY: 0.5 },
+];
 
 const DEFAULT_CONFIG = {
-  mode: 'tracking', // tracking | voice | hybrid
+  mode: 'voice', // tracking | voice | hybrid
   modelUrl: BUILTIN_MODELS[0].url,
-  scale: 2,
+  scale: 1,
   offsetX: 0,
-  offsetY: 0.5,
+  offsetY: 0,
   mirror: true,
   invertYaw: false,
   invertPitch: false,

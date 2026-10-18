@@ -119,7 +119,9 @@ async function loadModels() {
   sel.onchange = () => {
     if (!sel.value) return $('modelUrl').focus();
     $('modelUrl').value = sel.value;
-    saveConfig({ modelUrl: sel.value });
+    const preset = builtin.find((m) => m.url === sel.value);
+    saveConfig({ modelUrl: sel.value, ...(preset && { scale: preset.scale, offsetX: 0, offsetY: preset.offsetY }) });
+    if (preset) applyConfig(config);
   };
   sel.value = [...sel.options].some((o) => o.value === config.modelUrl) ? config.modelUrl : '';
 }
