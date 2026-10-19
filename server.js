@@ -3,6 +3,7 @@
 //  - https://<LAN IP>:3443   … iPhone 用 (phone.html: カメラ利用に HTTPS が必要)
 //  - WebSocket /ws           … 各画面間のパラメータ中継
 //  - POST /api/emotion       … 発言テキスト → ローカル LLM(Ollama) で表情推定
+//  - GET  /api/subscribers   … YouTube チャンネル登録者数 (subs.html 用)
 import http from 'node:http';
 import https from 'node:https';
 import fs from 'node:fs';
@@ -14,6 +15,7 @@ import selfsigned from 'selfsigned';
 import QRCode from 'qrcode';
 import { llmEmotion, ruleEmotion } from './lib/emotion.js';
 import { createVtsClient } from './lib/vts.js';
+import { fetchSubscribers } from './lib/youtube.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const HTTP_PORT = Number(process.env.PORT ?? 3000);
@@ -49,6 +51,8 @@ const DEFAULT_CONFIG = {
   micSensitivity: 1,
   micGate: 0.02,
   expressionMap: {}, // 例: { "joy": "f01" } モデル付属の表情ファイルを使う場合
+  youtubeApiKey: '', // YouTube Data API v3 のキー (登録者数表示用)
+  youtubeChannel: '', // チャンネル ID (UC...) / @ハンドル / チャンネル URL
 };
 
 let config = { ...DEFAULT_CONFIG };
@@ -180,6 +184,16 @@ const WSL_WARNING = IS_WSL_NAT
 // ---------- API ----------
 const history = [];
 
+// 登録者数はクォータ節約のため 15 秒キャッシュ (OBS を複数開いても API 呼び出しは増えない)
+let subsCache = { key: '', at: 0, data: null };
+async function getSubscribers() {
+  const key = `${config.youtubeApiKey}|${config.youtubeChannel}`;
+  if (subsCache.key === key && Date.now() - subsCache.at < 15000) return subsCache.data;
+  const data = await fetchSubscribers({ apiKey: config.youtubeApiKey, channel: config.youtubeChannel });
+  subsCache = { key, at: Date.now(), data };
+  return data;
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
@@ -230,6 +244,13 @@ async function handle(req, res) {
       history.push(text);
       if (history.length > 5) history.shift();
       return json(res, { ...result, source, error, ms: Date.now() - t0 });
+    }
+    if (p === '/api/subscribers') {
+      try {
+        return json(res, await getSubscribers());
+      } catch (e) {
+        return json(res, { error: e.message }, 502);
+      }
     }
     if (p.startsWith('/cache/')) return await serveCached(p.slice('/cache/'.length), res);
     serveStatic(p, res);
@@ -329,6 +350,7 @@ httpServer.listen(HTTP_PORT, () => {
   console.log(`\n=== VTuber ツール起動 ===`);
   console.log(`コントロール画面 : http://localhost:${HTTP_PORT}/control.html`);
   console.log(`OBS ブラウザソース: http://localhost:${HTTP_PORT}/avatar.html`);
+  console.log(`登録者数 (OBS)    : http://localhost:${HTTP_PORT}/subs.html`);
 });
 
 const httpsServer = https.createServer(loadCert(), handle);

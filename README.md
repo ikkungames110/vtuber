@@ -71,6 +71,61 @@ iPhone から PC に繋ぐため、**サーバーは必ず Windows 側の Node.j
 
 ウィンドウキャプチャで使う場合は `avatar.html?bg=green` でグリーンバックになります。
 
+## YouTube Live で配信する
+
+### 初回だけ (YouTube 側)
+
+1. [YouTube Studio](https://studio.youtube.com/) を開き、右上「作成」→「ライブ配信を開始」
+2. はじめての場合は電話番号の確認が求められ、**有効になるまで最大 24 時間** かかります
+3. 「エンコーダ配信」(ストリーミング ソフトウェア) を選ぶ
+
+### OBS と YouTube をつなぐ
+
+1. OBS →「設定」→「配信」→ サービスを **YouTube - RTMPS** にする
+2. 「アカウント接続 (推奨)」で Google にログイン (または YouTube Studio の「ストリームキー」を貼り付け)
+3. 「設定」→「出力」: 映像ビットレート 6000 Kbps 前後 (1080p 30fps の目安)、エンコーダは GPU (NVENC / AMF / QSV) があればそれを選ぶ
+4. 「設定」→「映像」: 出力解像度 1920×1080、FPS 30 (動きの多いゲームなら 60 + ビットレート 9000 程度)
+
+### シーンを組む (下から順に重なる)
+
+1. ゲーム画面:「ゲームキャプチャ」または「ウィンドウキャプチャ」
+2. アバター:「ブラウザ」→ `http://localhost:3000/avatar.html` (1920×1080、背景透過)
+3. 登録者数:「ブラウザ」→ `http://localhost:3000/subs.html` (下記)
+4. マイク:「音声入力キャプチャ」(デスクトップ音声はゲーム音として既定で入ります)
+
+### 配信開始
+
+1. このツールを起動し、コントロール画面でマイク開始 (タブは開いたまま)
+2. OBS で「配信開始」
+3. YouTube Studio のライブ管理画面でプレビューを確認 → タイトル・公開範囲を設定して公開
+   (OBS からアカウント接続した場合は OBS の「配信の管理」からも設定できます)
+
+> 初回は公開範囲「限定公開」でテスト配信して、音量バランスとアバターの位置を確認するのがおすすめです。
+
+## 登録者数をリアルタイム表示
+
+`subs.html` を OBS のブラウザソースに追加すると、チャンネル登録者数を表示します (20 秒ごとに更新、増えると「+1」が出てカウントアップ)。
+
+1. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作成
+2. 「API とサービス」→「ライブラリ」→ **YouTube Data API v3** を有効化
+3. 「認証情報」→「認証情報を作成」→「API キー」(キーの制限で YouTube Data API v3 のみに絞っておくと安心)
+4. コントロール画面の「📺 登録者数を配信画面に出す」に API キーと自分のチャンネル (`@ハンドル` でも OK) を入れて「取得テスト」
+5. OBS → ソース追加 →「ブラウザ」→ `http://localhost:3000/subs.html`、幅 600 / 高さ 200
+
+URL パラメータで見た目を変えられます。
+
+| パラメータ | 例 | 内容 |
+| --- | --- | --- |
+| `goal` | `?goal=1000` | 目標人数のゲージと「あと ○ 人」を表示 |
+| `label` | `?label=Subscribers` | ラベルの文字 (空で非表示) |
+| `size` | `?size=72` | 数字の大きさ (px) |
+| `color` | `?color=ffe066` | 文字色 |
+| `interval` | `?interval=30` | 更新間隔 (秒、最小 15) |
+
+- API の無料枠は 1 日 10,000 回。サーバー側で 15 秒キャッシュするので、24 時間つけっぱなしでも枠内に収まります
+- YouTube の仕様で、**登録者 1,000 人を超えると公開値は上 3 桁に丸められます** (例: 1,234 人 → 1,230)。1,000 人未満は正確な人数が出ます
+- API キーは `config.json` (Git 管理外) に保存されます
+
 ## iPhone トラッキング
 
 ### Safari (アプリ不要)
@@ -159,7 +214,9 @@ Ollama を Windows 側で動かしている場合は、コントロール画面�
 server.js            HTTP(3000)/HTTPS(3443) サーバー、WebSocket 中継、Ollama 呼び出し、VTS 受信
 lib/emotion.js       発言 → 表情 (LLM + キーワードのフォールバック)
 lib/vts.js           VTube Studio iPhone アプリからの UDP 受信
+lib/youtube.js       YouTube Data API で登録者数を取得
 public/avatar.*      Live2D 描画 (OBS 用)
+public/subs.html     登録者数オーバーレイ (OBS 用)
 public/control.*     コントロール画面 (モード切替・マイク・音声認識・設定)
 public/phone.*       iPhone 用トラッカー (MediaPipe Face Landmarker)
 public/lib/face.js   ARKit ブレンドシェイプ → アバターパラメータ変換

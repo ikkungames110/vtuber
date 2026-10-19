@@ -321,6 +321,27 @@ async function requestEmotion(text) {
 $('testBtn').onclick = () => $('testText').value && requestEmotion($('testText').value);
 $('testText').onkeydown = (e) => e.key === 'Enter' && $('testBtn').click();
 
+// ---------- 登録者数 ----------
+async function testSubscribers() {
+  $('subsResult').textContent = '取得中…';
+  await new Promise((r) => setTimeout(r, 300)); // 入力直後の設定保存を待つ
+  try {
+    const d = await (await fetch('/api/subscribers')).json();
+    if (d.error) throw new Error(d.error);
+    $('subsResult').textContent = `✅ ${d.title}: ${d.hidden ? '登録者数は非公開設定です' : `${d.count.toLocaleString('ja-JP')} 人`}`;
+  } catch (e) {
+    $('subsResult').textContent = `⚠ ${e.message}`;
+  }
+}
+function updateSubsUrl() {
+  const goal = Number($('subsGoal').value);
+  $('subsUrl').textContent = `${location.origin}/subs.html${goal > 0 ? `?goal=${goal}` : ''}`;
+}
+$('subsTest').onclick = testSubscribers;
+$('subsGoal').oninput = updateSubsUrl;
+$('copySubs').onclick = () => navigator.clipboard.writeText($('subsUrl').textContent);
+updateSubsUrl();
+
 // ---------- 初期化 ----------
 config = await (await fetch('/api/config')).json();
 await loadModels();

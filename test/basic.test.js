@@ -26,3 +26,11 @@ test('キーワード判定と LLM 出力の整形', () => {
   assert.equal(ruleEmotion('wwwww').emotion, 'laugh');
   assert.deepEqual(sanitize({ emotion: 'xxx', intensity: 8, gesture: 'nod' }), { emotion: 'neutral', intensity: 0.8, gesture: 'nod' });
 });
+
+test('YouTube チャンネル指定の解釈', async () => {
+  const { parseChannel } = await import('../lib/youtube.js');
+  assert.deepEqual(parseChannel('UCxxxxxxxxxxxxxxxxxxxxxx'), { id: 'UCxxxxxxxxxxxxxxxxxxxxxx' });
+  assert.deepEqual(parseChannel('https://www.youtube.com/channel/UCxxxxxxxxxxxxxxxxxxxxxx'), { id: 'UCxxxxxxxxxxxxxxxxxxxxxx' });
+  assert.deepEqual(parseChannel('https://www.youtube.com/@shian_ch'), { forHandle: '@shian_ch' });
+  assert.deepEqual(parseChannel('shian_ch'), { forHandle: '@shian_ch' });
+});

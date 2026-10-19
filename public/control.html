@@ -98,6 +98,24 @@
     </section>
 
     <section class="panel">
+      <h2>📺 登録者数を配信画面に出す</h2>
+      <label class="field">API キー <input id="youtubeApiKey" type="password" placeholder="YouTube Data API v3 のキー" data-cfg /></label>
+      <label class="field">チャンネル <input id="youtubeChannel" placeholder="@ハンドル / UC から始まる ID / チャンネル URL" data-cfg /></label>
+      <div class="row">
+        <span id="subsResult" class="result">-</span>
+        <button id="subsTest" class="small">取得テスト</button>
+      </div>
+      <label class="field">目標人数 <input id="subsGoal" type="number" min="0" placeholder="空なら目標ゲージなし" /></label>
+      <div class="obs">
+        OBS → ソース追加 →「ブラウザ」→ URL に
+        <code id="subsUrl">http://localhost:3000/subs.html</code>
+        幅 600 / 高さ 200
+        <button id="copySubs" class="small">コピー</button>
+      </div>
+      <p class="hint">API キーは Google Cloud Console で「YouTube Data API v3」を有効にして作成します (README 参照)。20 秒ごとに更新され、増えると +1 が出ます。</p>
+    </section>
+
+    <section class="panel">
       <h2>🧍 アバター設定</h2>
       <label class="field">モデル <select id="modelSelect"></select></label>
       <label class="field">URL <input id="modelUrl" data-cfg /></label>
