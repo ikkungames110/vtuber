@@ -5,10 +5,10 @@
   <title>登録者数</title>
   <!--
     OBS のブラウザソース用 (背景は透過)。URL パラメータ:
-      label=登録者     ラベルの文字 (空にすると非表示)
+      label=現在の登録者  ラベルの文字 (空にすると非表示)
       goal=1000       目標人数 (指定するとゲージを表示)
       size=56         数字の大きさ (px)
-      color=ffffff    文字色
+      color=111111    文字色
       interval=20     更新間隔 (秒、最小 15)
   -->
   <style>
@@ -17,30 +17,35 @@
       font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
       color: var(--color);
       padding: 16px;
-      -webkit-text-stroke: calc(var(--size) * 0.1) #1b2440;
-      paint-order: stroke fill;
     }
-    .box { display: inline-flex; flex-direction: column; gap: 6px; }
-    .row { display: flex; align-items: baseline; gap: 12px; position: relative; }
-    #label { font-size: calc(var(--size) * 0.5); font-weight: 800; }
-    #count { font-size: var(--size); font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+    /* 白い長方形のパネル */
+    .box {
+      display: inline-flex; flex-direction: column; gap: 8px;
+      background: #fff; padding: calc(var(--size) * 0.22) calc(var(--size) * 0.45);
+      box-shadow: 0 4px 14px #0004;
+    }
+    .row { display: flex; align-items: baseline; gap: calc(var(--size) * 0.25); position: relative; white-space: nowrap; }
+    #label { font-size: calc(var(--size) * 0.5); font-weight: 900; }
+    #count { display: inline-block; font-size: var(--size); font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .02em; line-height: 1.1; }
+    #unit { font-size: calc(var(--size) * 0.5); font-weight: 900; margin-left: calc(var(--size) * -0.12); }
     #count.bump { animation: bump .6s ease-out; }
-    @keyframes bump { 30% { transform: scale(1.18); color: #ffe066; } }
+    @keyframes bump { 30% { transform: scale(1.15); color: #e8335a; } }
     .plus {
-      position: absolute; right: -8px; top: 0; font-size: calc(var(--size) * 0.5); font-weight: 900; color: #ffe066;
+      position: absolute; right: -8px; top: 0; font-size: calc(var(--size) * 0.5); font-weight: 900; color: #e8335a;
+      -webkit-text-stroke: 5px #fff; paint-order: stroke fill;
       animation: rise 1.6s ease-out forwards;
     }
     @keyframes rise { from { opacity: 1; transform: translate(100%, 0); } to { opacity: 0; transform: translate(100%, -120%); } }
-    #gauge { display: none; height: calc(var(--size) * 0.22); min-width: calc(var(--size) * 5); border-radius: 99px; background: #1b2440aa; border: 2px solid #1b2440; overflow: hidden; }
+    #gauge { display: none; height: calc(var(--size) * 0.22); min-width: calc(var(--size) * 5); border-radius: 99px; background: #e6e8ef; border: 2px solid var(--color); overflow: hidden; }
     #gauge div { height: 100%; width: 0; background: linear-gradient(90deg, #8fd3ff, #c9a8ff); transition: width 1s ease-out; }
-    #goalText { display: none; font-size: calc(var(--size) * 0.32); font-weight: 800; }
-    #error { font-size: 14px; color: #ffb3b3; -webkit-text-stroke: 0; background: #000a; padding: 4px 8px; border-radius: 6px; }
+    #goalText { display: none; font-size: calc(var(--size) * 0.32); font-weight: 900; }
+    #error { font-size: 14px; color: #c0002a; font-weight: 700; }
     #error:empty { display: none; }
   </style>
 </head>
 <body>
   <div class="box">
-    <div class="row"><span id="label"></span><span id="count">-</span></div>
+    <div class="row"><span id="label"></span><span id="count">-</span><span id="unit">人</span></div>
     <div id="gauge"><div></div></div>
     <span id="goalText"></span>
     <span id="error"></span>
@@ -50,9 +55,9 @@
     const goal = Number(q.get('goal')) || 0;
     const interval = Math.max(15, Number(q.get('interval')) || 20) * 1000;
     document.body.style.setProperty('--size', `${Number(q.get('size')) || 56}px`);
-    document.body.style.setProperty('--color', `#${q.get('color') || 'ffffff'}`);
+    document.body.style.setProperty('--color', `#${q.get('color') || '111111'}`);
     const $ = (id) => document.getElementById(id);
-    $('label').textContent = q.get('label') ?? '登録者';
+    $('label').textContent = q.get('label') ?? '現在の登録者';
     if (goal) $('gauge').style.display = $('goalText').style.display = 'block';
 
     let shown = null;
@@ -89,6 +94,7 @@
         const d = await r.json();
         if (d.error) throw new Error(d.error);
         $('error').textContent = '';
+        $('unit').hidden = d.hidden;
         if (d.hidden) $('count').textContent = '非公開';
         else animateTo(d.count);
       } catch (e) {
