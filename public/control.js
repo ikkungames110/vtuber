@@ -344,7 +344,14 @@ $('copySubs').onclick = () => navigator.clipboard.writeText($('subsUrl').textCon
 updateSubsUrl();
 
 // ---------- 話題ルーレット ----------
-$('rouletteUrl').textContent = `${location.origin}/roulette.html`;
+// 大きさは文字サイズではなく拡大率で変える (小さい文字は配信で読みづらいため)
+function updateRouletteUrl() {
+  const s = Number($('rouletteScale').value) || 1;
+  $('rouletteUrl').textContent = `${location.origin}/roulette.html${s !== 1 ? `?scale=${s}` : ''}`;
+  $('rouletteSize').textContent = `幅 ${Math.round(760 * s)} / 高さ ${Math.round(620 * s)}`;
+}
+$('rouletteScale').oninput = updateRouletteUrl;
+updateRouletteUrl();
 $('copyRoulette').onclick = () => navigator.clipboard.writeText($('rouletteUrl').textContent);
 $('saveTopics').onclick = () => {
   const topics = $('rouletteTopics').value.split('\n').map((s) => s.trim()).filter(Boolean);

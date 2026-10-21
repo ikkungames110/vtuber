@@ -124,10 +124,11 @@
         <button id="testSpin" class="small">テストで回す</button>
         <span id="topicsResult" class="hint"></span>
       </div>
+      <label class="field">拡大率 <input id="rouletteScale" type="number" min="0.3" max="2" step="0.05" value="1" /></label>
       <div class="obs">
         OBS → ソース追加 →「ブラウザ」→ URL に
         <code id="rouletteUrl">http://localhost:3000/roulette.html</code>
-        幅 760 / 高さ 560
+        <span id="rouletteSize">幅 760 / 高さ 620</span>
         <button id="copyRoulette" class="small">コピー</button>
       </div>
       <p class="hint">効果音を OBS に入れるには、ブラウザソースの「OBS で音声を制御する」を ON。音なしは <code>?sound=0</code>、回っていない間は隠すなら <code>?hide=1</code>。</p>

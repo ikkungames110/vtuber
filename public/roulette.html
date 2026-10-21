@@ -4,13 +4,14 @@
   <meta charset="utf-8" />
   <title>話題ルーレット</title>
   <!--
-    OBS のブラウザソース用 (背景は透過、幅 760 / 高さ 560 推奨)。
+    OBS のブラウザソース用 (背景は透過、幅 760 / 高さ 620 推奨。scale を変えたらその倍率ぶん)。
     スロットマシンの回転ドラム式。登録者が 1 人増えるごとに 1 回まわる
     (複数人増えたらその回数ぶん順番に回る)。
     URL パラメータ:
       sound=0       効果音を鳴らさない
       interval=20   登録者数の確認間隔 (秒、最小 15)
       hide=1        回っていないときは隠す
+      scale=0.7     全体の拡大率 (文字は読みやすい大きさのまま、まるごと縮小・拡大する)
   -->
   <style>
     html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
@@ -18,7 +19,7 @@
       font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
       color: #fff; display: flex; flex-direction: column; align-items: center;
     }
-    .stage { position: relative; margin-top: 100px; transition: opacity .5s, transform .5s; }
+    .stage { position: relative; margin-top: 100px; zoom: var(--scale, 1); transition: opacity .5s, transform .5s; }
     body.idle-hidden .stage { opacity: 0; transform: translateY(20px) scale(.9); }
 
     /* ---------- 筐体 ---------- */
@@ -87,9 +88,10 @@
     .lever.pull .arm { animation: pull .7s cubic-bezier(.3, 0, .3, 1); }
     @keyframes pull { 0% { transform: scaleY(1); } 35% { transform: scaleY(-.55); } 100% { transform: scaleY(1); } }
 
+    /* 説明文: 白い長方形 + 黒の太字 (登録者数の表示とそろえる) */
     .caption {
-      margin-top: 14px; text-align: center; font-size: 17px; font-weight: 800; letter-spacing: .03em;
-      -webkit-text-stroke: 4px #1b2440; paint-order: stroke fill;
+      display: table; margin: 16px auto 0; padding: 8px 20px; background: #fff; color: #111;
+      font-size: 26px; font-weight: 900; letter-spacing: .02em; box-shadow: 0 4px 14px #0004;
     }
     /* 「登録者 +1 ありがとう！」 */
     #banner {
@@ -140,6 +142,7 @@
     const SOUND = q.get('sound') !== '0';
     const HIDE_IDLE = q.get('hide') === '1';
     const INTERVAL = Math.max(15, Number(q.get('interval')) || 20) * 1000;
+    document.documentElement.style.setProperty('--scale', Number(q.get('scale')) || 1);
     const $ = (id) => document.getElementById(id);
     const COLORS = ['#8fd3ff', '#c9a8ff', '#ffd6e7', '#b8f0e0', '#ffe8a8', '#a8c8ff', '#f5c2ff', '#ff8fa8'];
     const FACE_H = 76; // 1 コマの高さ (px)
