@@ -1,10 +1,22 @@
 // 立ち絵 1 枚 + 口の差分で動く内蔵モデル (いわゆる PNGTuber)。
 // 腕まで入った立ち絵に、表情シート (口閉じ / 半開き) から縮尺を合わせて移植した口と、立ち絵に元から描かれた開き口を使い、
 // ParamMouthOpenY で口を切り替える。
-// たまにほんの少し左右にゆらゆらさせて、配信中の VTuber っぽい動きを出す。
+// 人間の VTuber のように、不規則なタイミングで左右に体重を移したり、ふらっと揺れたりさせる。
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+
+// なめらかな 1 次元ノイズ (-1〜1)。周期的にならないゆらぎに使う
+const hash = (i) => {
+  const x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+  return (x - Math.floor(x)) * 2 - 1;
+};
+const noise = (x) => {
+  const i = Math.floor(x);
+  const f = x - i;
+  const u = f * f * (3 - 2 * f);
+  return hash(i) * (1 - u) + hash(i + 1) * u;
+};
 
 const SPRITES = {
   'builtin:hyoshoku': {
@@ -69,8 +81,13 @@ class PngModel extends PIXI.Sprite {
     this.mouth = 0; // 0: 閉じ 1: 半開き 2: 開き
     this.mouthChangedAt = 0;
     this.talk = 0; // 喋っている度合い (なめらか)
-    this.sway = null; // { start, dur, amp, cycles }
-    this.nextSway = rand(2, 5);
+    // 体の傾き (度)。ランダムな目標角へバネで寄っていく
+    this.lean = 0;
+    this.leanVel = 0;
+    this.leanTarget = 0;
+    this.leanSpring = { w: 3, zeta: 0.8 };
+    this.nextLeanAt = rand(0.5, 2);
+    this.seed = rand(0, 1000);
     this.tick = () => this.update(PIXI.Ticker.shared.elapsedMS / 1000);
     PIXI.Ticker.shared.add(this.tick);
   }
@@ -89,7 +106,7 @@ class PngModel extends PIXI.Sprite {
     const open = clamp(this.params.ParamMouthOpenY ?? 0, 0, 1);
     this.updateMouth(open);
     this.talk += ((open > 0.12 ? 1 : 0) - this.talk) * (1 - Math.exp(-dt * 2));
-    this.draw();
+    this.draw(dt);
     this.texture.baseTexture.update();
   }
 
@@ -109,30 +126,33 @@ class PngModel extends PIXI.Sprite {
     }
   }
 
-  // たまに起きるゆらゆら (喋っている間は起きやすい)。戻り値は傾き(ラジアン)
-  swayAngle() {
+  // 不規則なゆらゆら。戻り値は傾き(ラジアン)
+  // ・ときどき左右どちらかへ体重を移して少し留まる (喋っている間は頻繁に・大きめに)
+  // ・常にゆっくり漂う小さなゆらぎ + 喋っているときの細かい揺れ
+  swayAngle(dt) {
     const t = this.time;
-    if (!this.sway && t > this.nextSway) {
-      this.sway = { start: t, dur: rand(2.5, 5), amp: rand(0.5, 1.2) * (Math.random() < 0.5 ? -1 : 1), cycles: Math.random() < 0.5 ? 0.5 : 1 };
+    const talking = this.talk > 0.5;
+    if (t > this.nextLeanAt) {
+      const r = Math.random();
+      if (r < 0.3) this.leanTarget = rand(-0.4, 0.4); // まっすぐに戻る
+      else if (r < 0.55) this.leanTarget = -Math.sign(this.leanTarget || 1) * rand(1, talking ? 3 : 2.2); // 反対側へ
+      else this.leanTarget = rand(-1, 1) * (talking ? 3 : 2.2);
+      // 速さもまちまちに (ゆっくり傾く / すっと傾く)
+      this.leanSpring = { w: rand(1.5, talking ? 5 : 3.5), zeta: rand(0.55, 0.95) };
+      this.nextLeanAt = t + (talking ? rand(0.8, 3) : rand(1.5, 6));
     }
-    let deg = 0;
-    if (this.sway) {
-      const p = (t - this.sway.start) / this.sway.dur;
-      if (p >= 1) {
-        this.sway = null;
-        this.nextSway = t + (this.talk > 0.5 ? rand(1.5, 5) : rand(4, 10));
-      } else {
-        // 両端をなめらかに 0 にする。片側に寄って戻る / 左右に 1 往復
-        const env = Math.sin(Math.PI * p);
-        deg = this.sway.amp * env * (this.sway.cycles === 0.5 ? env : Math.sin(Math.PI * 2 * p));
-      }
-    }
-    // 喋っているときの小さな揺れ
-    deg += this.talk * 0.25 * Math.sin(t * 2.3);
+    const { w, zeta } = this.leanSpring;
+    this.leanVel += (w * w * (this.leanTarget - this.lean) - 2 * zeta * w * this.leanVel) * dt;
+    this.lean += this.leanVel * dt;
+
+    const s = this.seed;
+    let deg = this.lean;
+    deg += noise(s + t * 0.35) * 0.6; // ゆっくり漂う
+    deg += this.talk * (noise(s + 50 + t * 1.6) * 0.6 + noise(s + 90 + t * 3.1) * 0.25); // 喋りの細かい揺れ
     return (deg * Math.PI) / 180;
   }
 
-  draw() {
+  draw(dt) {
     const ctx = this.ctx;
     const { width: CW, height: CH } = this.canvas;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -140,13 +160,14 @@ class PngModel extends PIXI.Sprite {
     if (!this.images) return;
     const [base, ...mouths] = this.images;
     const t = this.time;
-    const rot = this.swayAngle();
+    const rot = this.swayAngle(dt);
     const breath = Math.sin(t * 1.6) * 0.5 + 0.5;
 
     // 下端中央を支点に傾ける (体ごと揺れる感じ)
     const pivotX = this.def.width / 2;
     const pivotY = this.def.height;
-    ctx.translate(pivotX + rot * 180, pivotY - this.talk * 1.5);
+    const bob = this.talk * (1.5 + Math.max(0, noise(this.seed + 130 + t * 2.4)) * 3); // 喋りながら少し弾む
+    ctx.translate(pivotX + rot * 180, pivotY - bob);
     ctx.rotate(rot);
     ctx.scale(1, 1 + breath * 0.004);
     ctx.translate(-pivotX, -pivotY);
