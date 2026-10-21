@@ -11,8 +11,8 @@ const SPRITES = {
     dir: '/builtin/hyoshoku/',
     base: 'base.webp',
     mouths: ['mouth-half.png', 'mouth-open.png'],
-    mouthAt: { x: 509, y: 260 }, // 口の差分を貼る位置 (base 画像上の座標)
-    width: 1107,
+    mouthAt: { x: 508, y: 260 }, // 口の差分を貼る位置 (base 画像上の座標)
+    width: 1106,
     height: 1024,
   },
 };
