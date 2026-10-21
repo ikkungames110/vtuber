@@ -45,6 +45,7 @@ function applyConfig(c) {
     if (el.type === 'checkbox') el.checked = !!c[el.id];
     else el.value = c[el.id] ?? '';
   }
+  if (document.activeElement !== $('rouletteTopics')) $('rouletteTopics').value = (c.rouletteTopics ?? []).join('\n');
   if (document.activeElement !== $('expressionMap')) $('expressionMap').value = JSON.stringify(c.expressionMap ?? {}, null, 1);
   for (const sec of document.querySelectorAll('[data-show]')) {
     sec.classList.toggle('hidden', !sec.dataset.show.split(' ').includes(c.mode));
@@ -341,6 +342,17 @@ $('subsTest').onclick = testSubscribers;
 $('subsGoal').oninput = updateSubsUrl;
 $('copySubs').onclick = () => navigator.clipboard.writeText($('subsUrl').textContent);
 updateSubsUrl();
+
+// ---------- 話題ルーレット ----------
+$('rouletteUrl').textContent = `${location.origin}/roulette.html`;
+$('copyRoulette').onclick = () => navigator.clipboard.writeText($('rouletteUrl').textContent);
+$('saveTopics').onclick = () => {
+  const topics = $('rouletteTopics').value.split('\n').map((s) => s.trim()).filter(Boolean);
+  if (!topics.length) return ($('topicsResult').textContent = '話題を 1 つ以上入れてください');
+  saveConfig({ rouletteTopics: topics });
+  $('topicsResult').textContent = `${topics.length} 個保存しました`;
+};
+$('testSpin').onclick = () => conn.send({ type: 'roulette-spin' });
 
 // ---------- 初期化 ----------
 config = await (await fetch('/api/config')).json();

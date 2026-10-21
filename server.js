@@ -53,6 +53,8 @@ const DEFAULT_CONFIG = {
   expressionMap: {}, // 例: { "joy": "f01" } モデル付属の表情ファイルを使う場合
   youtubeApiKey: '', // YouTube Data API v3 のキー (登録者数表示用)
   youtubeChannel: '', // チャンネル ID (UC...) / @ハンドル / チャンネル URL
+  // 話題ルーレット (roulette.html) の項目
+  rouletteTopics: ['最近ハマってること', '子どもの頃の思い出', '好きな食べ物', '休日の過ごし方', '最近見た夢', '行ってみたい場所', 'おすすめのゲーム', '質問コーナー'],
 };
 
 let config = { ...DEFAULT_CONFIG };
@@ -328,6 +330,8 @@ function attachWs(server) {
       if (['track', 'voice', 'emotion', 'face-lost', 'calibrate'].includes(msg.type)) {
         broadcast(msg, (c) => c !== ws && (c.role === 'avatar' || c.role === 'control'));
       }
+      // コントロール画面の「テストで回す」→ 話題ルーレット
+      if (msg.type === 'roulette-spin') broadcast(msg, (c) => c.role === 'roulette');
     });
     ws.on('close', () => {
       clients.delete(ws);
@@ -351,6 +355,7 @@ httpServer.listen(HTTP_PORT, () => {
   console.log(`コントロール画面 : http://localhost:${HTTP_PORT}/control.html`);
   console.log(`OBS ブラウザソース: http://localhost:${HTTP_PORT}/avatar.html`);
   console.log(`登録者数 (OBS)    : http://localhost:${HTTP_PORT}/subs.html`);
+  console.log(`話題ルーレット    : http://localhost:${HTTP_PORT}/roulette.html`);
 });
 
 const httpsServer = https.createServer(loadCert(), handle);

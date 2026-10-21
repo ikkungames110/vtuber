@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>話題ルーレット</title>
+  <!--
+    OBS のブラウザソース用 (背景は透過、幅 600 / 高さ 760 推奨)。
+    登録者が 1 人増えるごとにルーレットが回る (複数人増えたらその回数ぶん順番に回る)。
+    URL パラメータ:
+      sound=0       効果音を鳴らさない
+      interval=20   登録者数の確認間隔 (秒、最小 15)
+      hide=1        回っていないときはルーレットを隠す
+  -->
+  <style>
+    html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+    body {
+      font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif;
+      color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    }
+    .stage { position: relative; width: 520px; margin-top: 70px; transition: opacity .5s, transform .5s; }
+    body.idle-hidden .stage { opacity: 0; transform: scale(.85); }
+    #wheel { width: 520px; height: 520px; display: block; filter: drop-shadow(0 8px 18px #0006); }
+    #pointer {
+      position: absolute; left: 50%; top: -30px; width: 56px; height: 72px; margin-left: -28px;
+      transform-origin: 50% 22px; filter: drop-shadow(0 3px 4px #0007);
+    }
+    .caption {
+      margin-top: 14px; font-size: 18px; font-weight: 800; letter-spacing: .03em; text-align: center;
+      -webkit-text-stroke: 4px #1b2440; paint-order: stroke fill;
+    }
+    /* 「登録者 +1 ありがとう！」 */
+    #banner {
+      position: absolute; left: 50%; top: 6px; white-space: nowrap; font-size: 34px; font-weight: 900;
+      color: #ffe066; -webkit-text-stroke: 7px #1b2440; paint-order: stroke fill;
+      transform: translate(-50%, -20px) scale(.4); opacity: 0; pointer-events: none;
+    }
+    #banner.show { animation: banner 1.6s cubic-bezier(.2, 1.6, .4, 1) forwards; }
+    @keyframes banner {
+      0% { opacity: 0; transform: translate(-50%, -20px) scale(.4); }
+      25% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+      40% { transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -6px) scale(1); }
+    }
+    /* 当たった話題 */
+    #result {
+      position: absolute; left: 50%; top: 50%; width: 460px; box-sizing: border-box; padding: 18px 22px 22px;
+      border-radius: 22px; text-align: center; background: linear-gradient(160deg, #fffdf6, #eaf4ff);
+      color: #2a3360; border: 5px solid #1b2440; box-shadow: 0 10px 30px #0008;
+      transform: translate(-50%, -50%) scale(0); opacity: 0; pointer-events: none;
+    }
+    #result.show { animation: pop .6s cubic-bezier(.2, 1.5, .4, 1) forwards; }
+    #result.hide { animation: out .45s ease-in forwards; }
+    @keyframes pop { from { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-8deg); } to { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); } }
+    @keyframes out { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(.6); } }
+    #result small { display: block; font-size: 18px; font-weight: 800; color: #7a83b8; letter-spacing: .1em; }
+    #result b { display: block; margin-top: 6px; font-size: 38px; line-height: 1.25; font-weight: 900; word-break: break-all; }
+    #confetti { position: fixed; inset: 0; pointer-events: none; }
+    #error { position: fixed; left: 8px; bottom: 8px; font-size: 13px; color: #ffb3b3; background: #000a; padding: 4px 8px; border-radius: 6px; }
+    #error:empty { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+  <div class="stage">
+    <canvas id="wheel" width="1040" height="1040"></canvas>
+    <svg id="pointer" viewBox="0 0 56 72">
+      <path d="M28 70 L6 24 A22 22 0 1 1 50 24 Z" fill="#ffe066" stroke="#1b2440" stroke-width="4" stroke-linejoin="round" />
+      <circle cx="28" cy="22" r="8" fill="#fff" stroke="#1b2440" stroke-width="3" />
+    </svg>
+    <div id="banner">登録者 +1 ありがとう！</div>
+    <div id="result"><small>🎤 次の話題は…</small><b id="resultText"></b></div>
+    <div class="caption">登録者が1人増えるごとにルーレットが回ります</div>
+  </div>
+  <div id="error"></div>
+
+  <script type="module">
+    import { connect } from '/lib/ws.js';
+
+    const q = new URLSearchParams(location.search);
+    const SOUND = q.get('sound') !== '0';
+    const HIDE_IDLE = q.get('hide') === '1';
+    const INTERVAL = Math.max(15, Number(q.get('interval')) || 20) * 1000;
+    const $ = (id) => document.getElementById(id);
+    const TAU = Math.PI * 2;
+    const COLORS = ['#8fd3ff', '#c9a8ff', '#ffd6e7', '#b8f0e0', '#ffe8a8', '#a8c8ff', '#f5c2ff', '#cfe9ff'];
+
+    let topics = ['雑談'];
+    const setTopics = (list) => {
+      const t = (list ?? []).map((s) => String(s).trim()).filter(Boolean);
+      if (t.length) topics = t;
+    };
+
+    // ---------- 描画 ----------
+    const wheel = $('wheel');
+    const ctx = wheel.getContext('2d');
+    const R = wheel.width / 2;
+    let rot = 0; // ホイールの回転角 (ラジアン)
+    let spinTopics = null; // 回転中は話題を固定する
+
+    function fitText(text, maxW, size) {
+      let s = text.length > 12 ? text.slice(0, 11) + '…' : text;
+      ctx.font = `900 ${size}px "M PLUS Rounded 1c", "Meiryo", sans-serif`;
+      while (ctx.measureText(s).width > maxW && size > 20) {
+        size -= 2;
+        ctx.font = `900 ${size}px "M PLUS Rounded 1c", "Meiryo", sans-serif`;
+      }
+      return s;
+    }
+
+    function drawWheel(glow) {
+      const list = spinTopics ?? topics;
+      const n = list.length;
+      const seg = TAU / n;
+      ctx.clearRect(0, 0, wheel.width, wheel.height);
+      ctx.save();
+      ctx.translate(R, R);
+      // 外枠
+      ctx.beginPath();
+      ctx.arc(0, 0, R - 6, 0, TAU);
+      ctx.fillStyle = '#1b2440';
+      ctx.fill();
+      ctx.rotate(rot);
+      const r = R - 40;
+      for (let i = 0; i < n; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, i * seg, (i + 1) * seg);
+        ctx.closePath();
+        ctx.fillStyle = COLORS[(n % COLORS.length === 1 && i === n - 1 ? i + 1 : i) % COLORS.length];
+        ctx.fill();
+        ctx.strokeStyle = '#1b2440';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+        // 文字 (中心から外向き)
+        ctx.save();
+        ctx.rotate((i + 0.5) * seg);
+        const s = fitText(list[i], r * 0.68, n > 10 ? 34 : 44);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = '#ffffff';
+        ctx.strokeText(s, r - 28, 0);
+        ctx.fillStyle = '#2a3360';
+        ctx.fillText(s, r - 28, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+      // 外周のランプ (回転中はチカチカ)
+      ctx.save();
+      ctx.translate(R, R);
+      const lamps = 24;
+      for (let i = 0; i < lamps; i++) {
+        const a = (i / lamps) * TAU;
+        const on = glow ? (i + Math.floor(performance.now() / 90)) % 2 === 0 : true;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * (R - 22), Math.sin(a) * (R - 22), 9, 0, TAU);
+        ctx.fillStyle = on ? '#fff6c2' : '#6b6f94';
+        ctx.shadowColor = on ? '#ffe066' : 'transparent';
+        ctx.shadowBlur = on ? 18 : 0;
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+      // 中心のキャップ
+      const g = ctx.createRadialGradient(-14, -14, 4, 0, 0, 74);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(1, '#c9d8ff');
+      ctx.beginPath();
+      ctx.arc(0, 0, 70, 0, TAU);
+      ctx.fillStyle = g;
+      ctx.fill();
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#1b2440';
+      ctx.stroke();
+      ctx.font = '900 34px "M PLUS Rounded 1c", "Meiryo", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#2a3360';
+      ctx.fillText('話題', 0, 0);
+      ctx.restore();
+    }
+
+    // ポインター真下にある区画の番号
+    const indexAtPointer = (n) => Math.floor((((-Math.PI / 2 - rot) % TAU) + TAU) % TAU / (TAU / n));
+
+    // ---------- 効果音 ----------
+    let audio;
+    function beep(freq, dur, type = 'triangle', vol = 0.15, at = 0) {
+      if (!SOUND) return;
+      try {
+        audio ??= new AudioContext();
+        const t = audio.currentTime + at;
+        const o = audio.createOscillator();
+        const g = audio.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        o.connect(g).connect(audio.destination);
+        o.start(t);
+        o.stop(t + dur);
+      } catch {}
+    }
+    const fanfare = () => [523, 659, 784, 1047].forEach((f, i) => beep(f, i === 3 ? 0.6 : 0.16, 'square', 0.08, i * 0.12));
+
+    // ---------- 紙吹雪 ----------
+    const cf = $('confetti');
+    const cctx = cf.getContext('2d');
+    let pieces = [];
+    function burst() {
+      cf.width = innerWidth;
+      cf.height = innerHeight;
+      const cx = innerWidth / 2;
+      const cy = 70 + 260;
+      for (let i = 0; i < 140; i++) {
+        const a = Math.random() * TAU;
+        const v = 6 + Math.random() * 10;
+        pieces.push({
+          x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6,
+          w: 8 + Math.random() * 8, h: 5 + Math.random() * 6, r: Math.random() * TAU, vr: (Math.random() - 0.5) * 0.4,
+          c: COLORS[i % COLORS.length], life: 1,
+        });
+      }
+    }
+    function drawConfetti() {
+      cctx.clearRect(0, 0, cf.width, cf.height);
+      for (const p of pieces) {
+        p.vy += 0.35;
+        p.vx *= 0.985;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.r += p.vr;
+        p.life -= 0.006;
+        cctx.save();
+        cctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.r);
+        cctx.fillStyle = p.c;
+        cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 2)));
+        cctx.restore();
+      }
+      pieces = pieces.filter((p) => p.life > 0 && p.y < cf.height + 40);
+    }
+
+    // ---------- 回転 ----------
+    const easeOut = (t) => 1 - (1 - t) ** 4;
+    let spin = null; // { start, from, delta, dur, resolve }
+    let kick = 0; // ポインターの跳ね
+    let lastIdx = -1;
+
+    function startSpin() {
+      spinTopics = [...topics];
+      const n = spinTopics.length;
+      const seg = TAU / n;
+      const win = Math.floor(Math.random() * n);
+      const jitter = (Math.random() - 0.5) * seg * 0.7;
+      const target = -Math.PI / 2 - (win + 0.5) * seg - jitter;
+      const delta = ((((target - rot) % TAU) + TAU) % TAU) + TAU * (6 + Math.floor(Math.random() * 2));
+      return new Promise((resolve) => {
+        spin = { start: performance.now(), from: rot, delta, dur: 6500, resolve: () => resolve(spinTopics[win]) };
+      });
+    }
+
+    function frame(now) {
+      if (spin) {
+        const t = Math.min(1, (now - spin.start) / spin.dur);
+        // 最初に少し逆へ引いてから勢いよく回す
+        const windup = t < 0.1 ? 0.35 * Math.sin((Math.PI * t) / 0.1) : 0;
+        rot = spin.from + spin.delta * easeOut(t) - windup;
+        if (t >= 1) {
+          const done = spin.resolve;
+          spin = null;
+          done();
+        }
+      } else if (!showing) {
+        rot += 0.002; // 待機中はゆっくり回る
+      }
+      const n = (spinTopics ?? topics).length;
+      const idx = indexAtPointer(n);
+      if (idx !== lastIdx) {
+        if (spin) {
+          kick = 1;
+          beep(1400, 0.04, 'square', 0.05);
+        }
+        lastIdx = idx;
+      }
+      kick *= 0.82;
+      $('pointer').style.transform = `rotate(${kick * -28}deg)`;
+      drawWheel(!!spin);
+      drawConfetti();
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // ---------- 順番待ち (複数人増えたらその回数ぶん) ----------
+    let queued = 0;
+    let busy = false;
+    let showing = false;
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const setIdle = (idle) => document.body.classList.toggle('idle-hidden', HIDE_IDLE && idle);
+    setIdle(true);
+
+    function requestSpin(n = 1) {
+      queued += n;
+      run();
+    }
+    async function run() {
+      if (busy) return;
+      busy = true;
+      while (queued > 0) {
+        queued--;
+        setIdle(false);
+        await wait(HIDE_IDLE ? 500 : 0);
+        $('banner').classList.remove('show');
+        void $('banner').offsetWidth;
+        $('banner').classList.add('show');
+        beep(880, 0.12, 'square', 0.07);
+        beep(1320, 0.2, 'square', 0.07, 0.1);
+        await wait(900);
+        const topic = await startSpin();
+        showing = true;
+        $('resultText').textContent = topic;
+        $('result').className = 'show';
+        fanfare();
+        burst();
+        await wait(6000);
+        $('result').className = 'hide';
+        await wait(500);
+        $('result').className = '';
+        showing = false;
+        spinTopics = null;
+        await wait(400);
+      }
+      setIdle(true);
+      busy = false;
+    }
+
+    // ---------- 登録者数の監視 ----------
+    let lastCount = null;
+    async function poll() {
+      try {
+        const d = await (await fetch('/api/subscribers')).json();
+        if (d.error) throw new Error(d.error);
+        $('error').textContent = '';
+        if (d.count == null) return;
+        if (lastCount != null && d.count > lastCount) requestSpin(Math.min(d.count - lastCount, 10));
+        lastCount = d.count;
+      } catch (e) {
+        $('error').textContent = `登録者数: ${e.message}`;
+      }
+    }
+    poll();
+    setInterval(poll, INTERVAL);
+
+    // 話題の更新・テスト回転はコントロール画面から
+    setTopics((await (await fetch('/api/config')).json()).rouletteTopics);
+    connect('roulette', (msg) => {
+      if (msg.type === 'config') setTopics(msg.config.rouletteTopics);
+      else if (msg.type === 'roulette-spin') requestSpin(1);
+    });
+  </script>
+</body>
+</html>

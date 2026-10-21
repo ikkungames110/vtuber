@@ -116,6 +116,24 @@
     </section>
 
     <section class="panel">
+      <h2>🎡 話題ルーレット <small>(登録者が 1 人増えるごとに回る)</small></h2>
+      <p class="hint">話題を 1 行に 1 つずつ。上の「登録者数」の API キー・チャンネル設定を使います。</p>
+      <textarea id="rouletteTopics" rows="8"></textarea>
+      <div class="row">
+        <button id="saveTopics" class="small">保存</button>
+        <button id="testSpin" class="small">テストで回す</button>
+        <span id="topicsResult" class="hint"></span>
+      </div>
+      <div class="obs">
+        OBS → ソース追加 →「ブラウザ」→ URL に
+        <code id="rouletteUrl">http://localhost:3000/roulette.html</code>
+        幅 600 / 高さ 760
+        <button id="copyRoulette" class="small">コピー</button>
+      </div>
+      <p class="hint">効果音を OBS に入れるには、ブラウザソースの「OBS で音声を制御する」を ON。音なしは <code>?sound=0</code>、回っていない間は隠すなら <code>?hide=1</code>。</p>
+    </section>
+
+    <section class="panel">
       <h2>🧍 アバター設定</h2>
       <label class="field">モデル <select id="modelSelect"></select></label>
       <label class="field">URL <input id="modelUrl" data-cfg /></label>
