@@ -6,7 +6,7 @@
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const rand = (lo, hi) => lo + Math.random() * (hi - lo);
 
-// なめらかな 1 次元ノイズ (-1〜1)。周期的にならないゆらぎに使う
+// なめらかな 1 次元の勾配ノイズ (おおよそ -1〜1)。周期的にならず、平らな区間ができにくいゆらぎに使う
 const hash = (i) => {
   const x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
   return (x - Math.floor(x)) * 2 - 1;
@@ -14,8 +14,8 @@ const hash = (i) => {
 const noise = (x) => {
   const i = Math.floor(x);
   const f = x - i;
-  const u = f * f * (3 - 2 * f);
-  return hash(i) * (1 - u) + hash(i + 1) * u;
+  const u = f * f * f * (f * (f * 6 - 15) + 10);
+  return 2 * (hash(i) * f * (1 - u) + hash(i + 1) * (f - 1) * u);
 };
 
 const SPRITES = {
@@ -134,12 +134,12 @@ class PngModel extends PIXI.Sprite {
     const talking = this.talk > 0.5;
     if (t > this.nextLeanAt) {
       const r = Math.random();
-      if (r < 0.3) this.leanTarget = rand(-0.4, 0.4); // まっすぐに戻る
+      if (r < 0.15) this.leanTarget = rand(-0.5, 0.5); // まっすぐ付近に戻る
       else if (r < 0.55) this.leanTarget = -Math.sign(this.leanTarget || 1) * rand(1, talking ? 3 : 2.2); // 反対側へ
       else this.leanTarget = rand(-1, 1) * (talking ? 3 : 2.2);
       // 速さもまちまちに (ゆっくり傾く / すっと傾く)
       this.leanSpring = { w: rand(1.5, talking ? 5 : 3.5), zeta: rand(0.55, 0.95) };
-      this.nextLeanAt = t + (talking ? rand(0.8, 3) : rand(1.5, 6));
+      this.nextLeanAt = t + (talking ? rand(0.8, 2.5) : rand(1, 3.5));
     }
     const { w, zeta } = this.leanSpring;
     this.leanVel += (w * w * (this.leanTarget - this.lean) - 2 * zeta * w * this.leanVel) * dt;
@@ -147,7 +147,8 @@ class PngModel extends PIXI.Sprite {
 
     const s = this.seed;
     let deg = this.lean;
-    deg += noise(s + t * 0.35) * 0.6; // ゆっくり漂う
+    // ゆっくり漂う (周期の違う 3 層を重ねて、全部が同時に止まらないようにする = 完全静止を作らない)
+    deg += noise(s + t * 0.6) * 0.7 + noise(s + 20 + t * 1.05) * 0.4 + noise(s + 40 + t * 1.7) * 0.2;
     deg += this.talk * (noise(s + 50 + t * 1.6) * 0.6 + noise(s + 90 + t * 3.1) * 0.25); // 喋りの細かい揺れ
     return (deg * Math.PI) / 180;
   }
