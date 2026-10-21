@@ -1,5 +1,6 @@
 // 立ち絵 1 枚 + 口の差分で動く内蔵モデル (いわゆる PNGTuber)。
-// 表情シート (口閉じ / 半開き / 開き) から切り出した画像を使い、ParamMouthOpenY で口を切り替える。
+// 腕まで入った立ち絵に、表情シート (口閉じ / 半開き) から縮尺を合わせて移植した口と、立ち絵に元から描かれた開き口を使い、
+// ParamMouthOpenY で口を切り替える。
 // たまにほんの少し左右にゆらゆらさせて、配信中の VTuber っぽい動きを出す。
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -10,8 +11,8 @@ const SPRITES = {
     dir: '/builtin/hyoshoku/',
     base: 'base.webp',
     mouths: ['mouth-half.png', 'mouth-open.png'],
-    mouthAt: { x: 196, y: 462 }, // 口の差分を貼る位置 (base 画像上の座標)
-    width: 508,
+    mouthAt: { x: 509, y: 260 }, // 口の差分を貼る位置 (base 画像上の座標)
+    width: 1107,
     height: 1024,
   },
 };
